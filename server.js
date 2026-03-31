@@ -8,8 +8,8 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;          // Google OAuth Client ID
-const ADMIN_SECRET = process.env.ADMIN_SECRET || "CLASSROOM-SECRET"; // 관리자 코드
+const CLIENT_ID = "468945736758-5qec11vjns3jhta8sm6v936bp5nv39p0.apps.googleusercontent.com"
+const ADMIN_SECRET = "CLASSROOM-SECRET";
 
 if (!CLIENT_ID) {
   console.warn("⚠ GOOGLE_CLIENT_ID 환경 변수가 설정되지 않았습니다.");
@@ -98,8 +98,8 @@ app.post("/auth/google", async (req, res) => {
 //   method: "POST",
 //   headers: { "Content-Type": "application/json" },
 //   body: JSON.stringify({
-//     email: "teacher@example.com",
-//     role: "teacher",
+//     email: "교사메일@example.com",
+//     role: "teacher",   // student | teacher | admin
 //     secret: "CLASSROOM-SECRET"
 //   })
 // }).then(r=>r.json()).then(console.log);
