@@ -7,7 +7,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const CLIENT_ID = 468945736758-5qec11vjns3jhta8sm6v936bp5nv39p0.apps.googleusercontent.com;
 
 if (!CLIENT_ID) {
   console.warn("⚠ GOOGLE_CLIENT_ID 환경 변수가 설정되지 않았습니다.");
