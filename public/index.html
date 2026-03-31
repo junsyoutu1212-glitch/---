@@ -123,7 +123,7 @@
         conic-gradient(from 45deg,#4285F4,#34A853,#FBBC05,#EA4335,#4285F4);
     }
 
-    /* 숨겨둘 실제 GSI 버튼 영역 */
+    /* 숨겨진 GSI 버튼 컨테이너 */
     #gsi-button-container {
       position: absolute;
       top: -10000px;
@@ -485,7 +485,7 @@
       </div>
     </section>
 
-    <!-- 실제 GSI 버튼이 렌더링될 숨겨진 컨테이너 -->
+    <!-- GSI 버튼 컨테이너 -->
     <div id="gsi-button-container"></div>
 
     <!-- 책 선반 UI -->
@@ -755,8 +755,7 @@
   </div>
 
   <script>
-    // ===== 설정 필요: 본인의 Google Client ID =====
-    const GOOGLE_CLIENT_ID = "468945736758-5qec11vjns3jhta8sm6v936bp5nv39p0.apps.googleusercontent.com";
+    const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID";
 
     // 모드 전환
     const teacherModeBtn = document.getElementById("teacher-mode-btn");
@@ -793,7 +792,6 @@
     const modalNameInput = document.getElementById("modal-name-input");
     const modalConsentCheckbox = document.getElementById("modal-consent-checkbox");
 
-    // GSI 컨테이너
     const gsiButtonContainer = document.getElementById("gsi-button-container");
 
     // localStorage 키
@@ -829,24 +827,24 @@
     const shelf = document.getElementById("book-shelf");
     const shelfCountText = document.getElementById("shelf-count-text");
 
-    // 프로필(이름/동의/구글) 관리
+    // 프로필(이름/동의/구글/역할) 관리
     function loadProfile() {
       const data = localStorage.getItem(STORAGE_KEY_PROFILE);
-      return data ? JSON.parse(data) : { name: "", consent: false, google: null };
+      return data ? JSON.parse(data) : { name: "", consent: false, google: null, role: "student" };
     }
     function saveProfile(profile) {
       localStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(profile));
     }
     function updateLoginStatusText() {
       const profile = loadProfile();
+      const googleEmail = profile.google?.email;
       const googleName = profile.google?.name;
-      if (profile.consent && (profile.name || googleName)) {
-        const displayName = profile.name || googleName;
-        loginStatusText.textContent = `${displayName} · 동의 완료 (구글 로그인${profile.google ? " 사용" : " 없음"})`;
-      } else if (profile.consent) {
-        loginStatusText.textContent = `이름 미입력 · 동의 완료`;
+      const displayName = profile.name || googleName || "(이름 미입력)";
+      const roleLabel = profile.role || "student";
+      if (profile.consent || profile.google) {
+        loginStatusText.textContent = `${displayName} · ${googleEmail || ""} · 역할: ${roleLabel}`;
       } else {
-        loginStatusText.textContent = `로그인 안 됨 · 미동의`;
+        loginStatusText.textContent = "로그인 안 됨 · 미동의";
       }
     }
 
@@ -881,7 +879,7 @@
       closePrivacyModal();
     });
 
-    // 책/기록 관련 함수
+    // 책/기록 관련 함수 (생략 없이 그대로 위에서 쓰던 것들과 동일)
     function loadBooks() {
       const data = localStorage.getItem(STORAGE_KEY_BOOKS);
       return data ? JSON.parse(data) : [];
@@ -957,7 +955,7 @@
         const book = books.find(b => b.id === rec.bookId);
         const totalPages = book ? book.pages : 0;
         const progress = totalPages ? Math.min(100, Math.round((rec.totalPages / totalPages) * 100)) : 0;
-        const status = progress >= 100 ? "완독" : (progress >= 80 ? "거의 완독" : "읽는 중");
+        const status = progress >= 100 ? "완독" : (progress >= 80 ? "거의 완독" : "읽는 중";
 
         totalToday += rec.todayPages;
         studentSet.add(rec.studentName + "|" + rec.className);
@@ -1108,10 +1106,9 @@
 
     // ===== Google Identity Services 초기화 =====
     function handleGoogleResponse(response) {
-      const idToken = response.credential; // ID 토큰[web:73]
+      const idToken = response.credential;
       if (!idToken) return;
 
-      // 백엔드로 토큰 전달 (Railway의 /auth/google)[web:80][web:93]
       fetch("/auth/google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1125,18 +1122,17 @@
           }
           const profile = loadProfile();
           profile.google = {
-            googleId: data.user.googleId,
             email: data.user.email,
             name: data.user.name,
             picture: data.user.picture
           };
-          // 이름이 비어 있으면 구글 이름으로 채워줌
+          profile.role = data.user.role || "student";
           if (!profile.name && data.user.name) {
             profile.name = data.user.name;
           }
           saveProfile(profile);
           updateLoginStatusText();
-          alert("Google 로그인 성공: " + (data.user.name || data.user.email));
+          alert(`Google 로그인 성공: ${data.user.name || data.user.email}\n역할: ${profile.role}`);
         })
         .catch(err => {
           console.error("auth/google error", err);
@@ -1155,7 +1151,6 @@
         theme: "outline",
         size: "large"
       });
-      // 자동 프롬프트는 안 띄우고, 커스텀 버튼에서 클릭으로 호출[web:90]
     }
 
     window.onload = () => {
