@@ -955,7 +955,7 @@
         const book = books.find(b => b.id === rec.bookId);
         const totalPages = book ? book.pages : 0;
         const progress = totalPages ? Math.min(100, Math.round((rec.totalPages / totalPages) * 100)) : 0;
-        const status = progress >= 100 ? "완독" : (progress >= 80 ? "거의 완독" : "읽는 중";
+        const status = progress >= 100 ? "완독" : (progress >= 80 ? "거의 완독" : "읽는 중");
 
         totalToday += rec.todayPages;
         studentSet.add(rec.studentName + "|" + rec.className);
