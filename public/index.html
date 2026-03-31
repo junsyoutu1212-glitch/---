@@ -22,7 +22,6 @@
       --shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.08);
     }
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       padding: 0;
@@ -119,8 +118,7 @@
       width: 16px;
       height: 16px;
       border-radius: 3px;
-      background:
-        conic-gradient(from 45deg,#4285F4,#34A853,#FBBC05,#EA4335,#4285F4);
+      background: conic-gradient(from 45deg,#4285F4,#34A853,#FBBC05,#EA4335,#4285F4);
     }
 
     /* 숨겨진 GSI 버튼 컨테이너 */
@@ -174,14 +172,8 @@
       gap: 4px;
       font-size: clamp(11px, 0.7vw + 8px, 13px);
     }
-    .book-chip-title {
-      font-weight: 600;
-      line-height: 1.2;
-    }
-    .book-chip-meta {
-      font-size: clamp(10px, 0.5vw + 7px, 11px);
-      color: var(--text-sub);
-    }
+    .book-chip-title { font-weight: 600; line-height: 1.2; }
+    .book-chip-meta { font-size: clamp(10px, 0.5vw + 7px, 11px); color: var(--text-sub); }
 
     .summary-grid {
       display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;
@@ -254,9 +246,7 @@
       display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px;
     }
     .form-group { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
-    label {
-      font-size: clamp(11px, 0.6vw + 8px, 13px);
-    }
+    label { font-size: clamp(11px, 0.6vw + 8px, 13px); }
     label span.req { color: #ef4444; margin-left: 4px; }
     input[type="text"], input[type="number"], select {
       border-radius: 9px; border: 1px solid var(--border); padding: 7px 9px;
@@ -306,10 +296,7 @@
     th, td {
       padding: 7px 9px; text-align: left; border-bottom: 1px solid #edf0f5;
     }
-    th {
-      font-weight: 600; color: #4b5563;
-      font-size: clamp(10px, 0.55vw + 7px, 12px);
-    }
+    th { font-weight: 600; color: #4b5563; font-size: clamp(10px, 0.55vw + 7px, 12px); }
     tbody tr:nth-child(even) { background: #f9fafb; }
     .tag {
       display: inline-flex; align-items: center;
@@ -336,7 +323,6 @@
     .teacher-only { display: block; }
     .student-only { display: none; }
 
-    /* 개인정보 처리방침 요약 카드 (하단) */
     .privacy-card {
       margin-top: 14px;
       padding: 12px 14px;
@@ -346,15 +332,8 @@
       font-size: clamp(10px, 0.5vw + 7px, 12px);
       color: var(--text-sub);
     }
-    .privacy-title {
-      font-weight: 600;
-      color: #111827;
-      margin-bottom: 4px;
-    }
-    .privacy-list {
-      margin: 4px 0 0;
-      padding-left: 16px;
-    }
+    .privacy-title { font-weight: 600; color: #111827; margin-bottom: 4px; }
+    .privacy-list { margin: 4px 0 0; padding-left: 16px; }
     .privacy-list li { margin-bottom: 2px; }
 
     /* 모달 */
@@ -757,31 +736,11 @@
   <script>
     const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID";
 
-    // 모드 전환
+    // 모드 전환 버튼
     const teacherModeBtn = document.getElementById("teacher-mode-btn");
     const studentModeBtn = document.getElementById("student-mode-btn");
 
-    function setMode(mode) {
-      const teacherOnlyEls = document.querySelectorAll(".teacher-only");
-      const studentOnlyEls = document.querySelectorAll(".student-only");
-
-      if (mode === "teacher") {
-        teacherModeBtn.classList.add("active");
-        studentModeBtn.classList.remove("active");
-        teacherOnlyEls.forEach(el => el.style.display = "block");
-        studentOnlyEls.forEach(el => el.style.display = "none");
-      } else {
-        teacherModeBtn.classList.remove("active");
-        studentModeBtn.classList.add("active");
-        teacherOnlyEls.forEach(el => el.style.display = "none");
-        studentOnlyEls.forEach(el => el.style.display = "block");
-      }
-    }
-
-    teacherModeBtn.addEventListener("click", () => setMode("teacher"));
-    studentModeBtn.addEventListener("click", () => setMode("student"));
-
-    // 로그인/개인정보 모달 관련
+    // 로그인/모달 요소
     const loginStatusText = document.getElementById("login-status-text");
     const googleLoginUiBtn = document.getElementById("google-login-ui-btn");
     const openPrivacyModalBtn = document.getElementById("open-privacy-modal-btn");
@@ -799,6 +758,7 @@
     const STORAGE_KEY_RECORDS = "readingDashboardRecords";
     const STORAGE_KEY_PROFILE = "readingDashboardProfile";
 
+    // 폼 요소들
     const bookTitleInput = document.getElementById("book-title-input");
     const bookAuthorInput = document.getElementById("book-author-input");
     const bookPagesInput = document.getElementById("book-pages-input");
@@ -835,6 +795,10 @@
     function saveProfile(profile) {
       localStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(profile));
     }
+    function getCurrentRole() {
+      const profile = loadProfile();
+      return profile.role || "student";
+    }
     function updateLoginStatusText() {
       const profile = loadProfile();
       const googleEmail = profile.google?.email;
@@ -855,18 +819,12 @@
       modalConsentCheckbox.checked = !!profile.consent;
       privacyModal.style.display = "flex";
     });
-
-    function closePrivacyModal() {
-      privacyModal.style.display = "none";
-    }
-
+    function closePrivacyModal() { privacyModal.style.display = "none"; }
     privacyCloseBtn.addEventListener("click", closePrivacyModal);
     privacyCancelBtn.addEventListener("click", closePrivacyModal);
-
     privacyAcceptBtn.addEventListener("click", () => {
       const name = modalNameInput.value.trim();
       const consent = modalConsentCheckbox.checked;
-
       if (!consent) {
         alert("개인정보 처리방침에 동의해야 이용할 수 있습니다.");
         return;
@@ -879,7 +837,38 @@
       closePrivacyModal();
     });
 
-    // 책/기록 관련 함수 (생략 없이 그대로 위에서 쓰던 것들과 동일)
+    // 모드 전환: 학생은 교사 모드 막기
+    function setMode(mode) {
+      const role = getCurrentRole(); // student / teacher / admin
+      const teacherOnlyEls = document.querySelectorAll(".teacher-only");
+      const studentOnlyEls = document.querySelectorAll(".student-only");
+
+      if (mode === "teacher" && !(role === "teacher" || role === "admin")) {
+        alert("교사/관리자 계정에서만 교사 모드로 볼 수 있습니다.");
+        teacherModeBtn.classList.remove("active");
+        studentModeBtn.classList.add("active");
+        teacherOnlyEls.forEach(el => el.style.display = "none");
+        studentOnlyEls.forEach(el => el.style.display = "block");
+        return;
+      }
+
+      if (mode === "teacher") {
+        teacherModeBtn.classList.add("active");
+        studentModeBtn.classList.remove("active");
+        teacherOnlyEls.forEach(el => el.style.display = "block");
+        studentOnlyEls.forEach(el => el.style.display = "none");
+      } else {
+        teacherModeBtn.classList.remove("active");
+        studentModeBtn.classList.add("active");
+        teacherOnlyEls.forEach(el => el.style.display = "none");
+        studentOnlyEls.forEach(el => el.style.display = "block");
+      }
+    }
+
+    teacherModeBtn.addEventListener("click", () => setMode("teacher"));
+    studentModeBtn.addEventListener("click", () => setMode("student"));
+
+    // 책/기록 관련
     function loadBooks() {
       const data = localStorage.getItem(STORAGE_KEY_BOOKS);
       return data ? JSON.parse(data) : [];
@@ -887,7 +876,6 @@
     function saveBooks(books) {
       localStorage.setItem(STORAGE_KEY_BOOKS, JSON.stringify(books));
     }
-
     function loadRecords() {
       const data = localStorage.getItem(STORAGE_KEY_RECORDS);
       return data ? JSON.parse(data) : [];
@@ -955,7 +943,12 @@
         const book = books.find(b => b.id === rec.bookId);
         const totalPages = book ? book.pages : 0;
         const progress = totalPages ? Math.min(100, Math.round((rec.totalPages / totalPages) * 100)) : 0;
-        const status = progress >= 100 ? "완독" : (progress >= 80 ? "거의 완독" : "읽는 중");
+        const status =
+          progress >= 100
+            ? "완독"
+            : progress >= 80
+              ? "거의 완독"
+              : "읽는 중";
 
         totalToday += rec.todayPages;
         studentSet.add(rec.studentName + "|" + rec.className);
@@ -1067,7 +1060,7 @@
         return;
       }
 
-      const records = loadRecords();
+            const records = loadRecords();
       const key = studentName + "|" + className + "|" + bookId;
       const todayStr = new Date().toISOString().slice(0, 10);
 
@@ -1132,6 +1125,9 @@
           }
           saveProfile(profile);
           updateLoginStatusText();
+          // 로그인 직후, 학생이면 학생 모드로 돌려두기
+          const role = profile.role;
+          setMode(role === "teacher" || role === "admin" ? "teacher" : "student");
           alert(`Google 로그인 성공: ${data.user.name || data.user.email}\n역할: ${profile.role}`);
         })
         .catch(err => {
@@ -1157,7 +1153,9 @@
       refreshBookSelect();
       renderRecords();
       updateLoginStatusText();
-      setMode("teacher");
+      // 로그인 안 했으면 기본은 학생 모드로 시작
+      const role = getCurrentRole();
+      setMode(role === "teacher" || role === "admin" ? "teacher" : "student");
       initGsi();
     };
 
