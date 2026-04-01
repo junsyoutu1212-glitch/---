@@ -1,8 +1,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import sqlite3 from "sqlite3";
-import { open } from "sqlite";
+import Database from "better-sqlite3";
+import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 
 dotenv.config();
@@ -10,252 +10,182 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 🔐 환경 변수
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const ADMIN_SECRET = process.env.ADMIN_SECRET;
+const GOOGLE_CLIENT_ID = "468945736758-5qec11vjns3jhta8sm6v936bp5nv39p0.apps.googleusercontent.com";
+const JWT_SECRET = "SUPER_SECRET_KEY"; // 바꿔라
+const ADMIN_SECRET = "CLASSROOM-SECRET";
 
-if (!CLIENT_ID) {
-  console.warn("⚠ GOOGLE_CLIENT_ID 없음 (.env 확인)");
-}
+const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
-// 🔐 Google 인증
-const client = new OAuth2Client(CLIENT_ID);
+// DB 생성
+const db = new Database("database.db");
 
-// 📦 SQLite 연결
-const db = await open({
-  filename: "./database.db",
-  driver: sqlite3.Database
-});
-
-// 📄 테이블 생성
-await db.exec(`
+// 테이블 생성
+db.prepare(`
 CREATE TABLE IF NOT EXISTS users (
   email TEXT PRIMARY KEY,
   name TEXT,
   picture TEXT,
   role TEXT DEFAULT 'student'
-);
+)
+`).run();
 
+db.prepare(`
 CREATE TABLE IF NOT EXISTS books (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  className TEXT,
+  id TEXT PRIMARY KEY,
   title TEXT,
   author TEXT,
   pages INTEGER,
-  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+  className TEXT
+)
+`).run();
 
+db.prepare(`
 CREATE TABLE IF NOT EXISTS records (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   studentName TEXT,
   className TEXT,
-  bookId INTEGER,
+  bookId TEXT,
   todayPages INTEGER,
   totalPages INTEGER,
-  lastPage INTEGER,
-  targetPages INTEGER,
   date TEXT
-);
-`);
-
-console.log("✅ SQLite 준비 완료");
+)
+`).run();
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
-/* =========================
-   🔐 Google 토큰 검증
-========================= */
-async function verifyGoogleToken(idToken) {
-  const ticket = await client.verifyIdToken({
-    idToken,
-    audience: CLIENT_ID
-  });
-  return ticket.getPayload();
-}
-
-/* =========================
-   ❤️ 헬스 체크
-========================= */
-app.get("/health", (req, res) => {
-  res.json({ ok: true });
-});
-
-/* =========================
-   🔑 Google 로그인
-========================= */
-app.post("/auth/google", async (req, res) => {
-  const { credential } = req.body;
-
-  if (!credential) {
-    return res.status(400).json({ ok: false, error: "credential 없음" });
-  }
+/* ---------------- JWT 미들웨어 ---------------- */
+function authMiddleware(req, res, next) {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ error: "토큰 없음" });
 
   try {
-    const payload = await verifyGoogleToken(credential);
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch {
+    res.status(401).json({ error: "토큰 오류" });
+  }
+}
 
-    const email = payload.email;
-    const name = payload.name;
-    const picture = payload.picture;
+/* ---------------- Google 로그인 ---------------- */
+app.post("/auth/google", async (req, res) => {
+  try {
+    const { credential } = req.body;
 
-    let user = await db.get("SELECT * FROM users WHERE email = ?", [email]);
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: GOOGLE_CLIENT_ID
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
+
+    let user = db.prepare("SELECT * FROM users WHERE email=?").get(email);
 
     if (!user) {
-      await db.run(
-        "INSERT INTO users (email, name, picture, role) VALUES (?, ?, ?, ?)",
-        [email, name, picture, "student"]
-      );
-      user = await db.get("SELECT * FROM users WHERE email = ?", [email]);
+      db.prepare(`
+        INSERT INTO users (email, name, picture, role)
+        VALUES (?, ?, ?, 'student')
+      `).run(email, name, picture);
     } else {
-      await db.run(
-        "UPDATE users SET name = ?, picture = ? WHERE email = ?",
-        [name, picture, email]
-      );
-      user = await db.get("SELECT * FROM users WHERE email = ?", [email]);
+      db.prepare(`
+        UPDATE users SET name=?, picture=? WHERE email=?
+      `).run(name, picture, email);
     }
 
-    res.json({ ok: true, user });
+    user = db.prepare("SELECT * FROM users WHERE email=?").get(email);
 
+    const token = jwt.sign(
+      { email: user.email, role: user.role },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({ ok: true, token, user });
   } catch (err) {
-    console.error(err);
-    res.status(401).json({ ok: false, error: "Google 인증 실패" });
+    res.status(401).json({ ok: false, error: "로그인 실패" });
   }
 });
 
-/* =========================
-   🔐 관리자: 역할 변경
-========================= */
-app.post("/admin/set-role", async (req, res) => {
+/* ---------------- 역할 변경 (관리자) ---------------- */
+app.post("/admin/set-role", (req, res) => {
   const { email, role, secret } = req.body;
 
   if (secret !== ADMIN_SECRET) {
-    return res.status(403).json({ ok: false, error: "권한 없음" });
+    return res.status(403).json({ error: "권한 없음" });
   }
 
-  if (!["student", "teacher", "admin"].includes(role)) {
-    return res.status(400).json({ ok: false, error: "role 오류" });
-  }
+  db.prepare("UPDATE users SET role=? WHERE email=?").run(role, email);
 
-  await db.run(
-    "UPDATE users SET role = ? WHERE email = ?",
-    [role, email]
-  );
-
-  const user = await db.get("SELECT * FROM users WHERE email = ?", [email]);
-
-  res.json({ ok: true, user });
+  res.json({ ok: true });
 });
 
-/* =========================
-   👥 관리자: 전체 유저 조회
-========================= */
-app.get("/admin/users", async (req, res) => {
-  const { secret } = req.query;
+/* ---------------- 도서 ---------------- */
 
-  if (secret !== ADMIN_SECRET) {
-    return res.status(403).json({ ok: false });
+// 도서 추가 (교사만)
+app.post("/books", authMiddleware, (req, res) => {
+  if (req.user.role !== "teacher" && req.user.role !== "admin") {
+    return res.status(403).json({ error: "교사만 가능" });
   }
 
-  const users = await db.all("SELECT * FROM users");
+  const { title, author, pages, className } = req.body;
+  const id = "book_" + Date.now();
 
-  res.json({ ok: true, users });
-});
+  db.prepare(`
+    INSERT INTO books (id, title, author, pages, className)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(id, title, author, pages, className);
 
-/* =========================
-   📚 도서 API
-========================= */
-
-// 도서 추가
-app.post("/books", async (req, res) => {
-  const { className, title, author, pages } = req.body;
-
-  if (!className || !title || !pages) {
-    return res.status(400).json({ ok: false, error: "필수값 누락" });
-  }
-
-  const result = await db.run(
-    "INSERT INTO books (className, title, author, pages) VALUES (?, ?, ?, ?)",
-    [className, title, author || "", pages]
-  );
-
-  const book = await db.get("SELECT * FROM books WHERE id = ?", [result.lastID]);
-
-  res.json({ ok: true, book });
+  res.json({ ok: true });
 });
 
 // 도서 목록
-app.get("/books", async (req, res) => {
-  const books = await db.all("SELECT * FROM books ORDER BY createdAt DESC");
-  res.json({ ok: true, books });
+app.get("/books", (req, res) => {
+  const books = db.prepare("SELECT * FROM books").all();
+  res.json(books);
 });
 
-/* =========================
-   📊 기록 API
-========================= */
+/* ---------------- 기록 ---------------- */
 
-// 기록 저장
-app.post("/records", async (req, res) => {
-  const data = req.body;
+// 기록 추가
+app.post("/records", authMiddleware, (req, res) => {
+  const { studentName, className, bookId, todayPages } = req.body;
 
-  if (!data.studentName || !data.className || !data.bookId) {
-    return res.status(400).json({ ok: false, error: "필수값 누락" });
-  }
+  const prev = db.prepare(`
+    SELECT MAX(totalPages) as max FROM records
+    WHERE studentName=? AND className=? AND bookId=?
+  `).get(studentName, className, bookId);
 
-  const existing = await db.get(
-    `SELECT * FROM records 
-     WHERE studentName = ? AND className = ? AND bookId = ? AND date = ?`,
-    [data.studentName, data.className, data.bookId, data.date]
-  );
+  const total = (prev?.max || 0) + todayPages;
 
-  if (existing) {
-    await db.run(
-      `UPDATE records 
-       SET todayPages = todayPages + ?, totalPages = totalPages + ?
-       WHERE id = ?`,
-      [data.todayPages, data.todayPages, existing.id]
-    );
+  db.prepare(`
+    INSERT INTO records (studentName, className, bookId, todayPages, totalPages, date)
+    VALUES (?, ?, ?, ?, ?, DATE('now'))
+  `).run(studentName, className, bookId, todayPages, total);
 
-    const updated = await db.get("SELECT * FROM records WHERE id = ?", [existing.id]);
-    return res.json({ ok: true, record: updated });
-  }
-
-  const result = await db.run(
-    `INSERT INTO records 
-     (studentName, className, bookId, todayPages, totalPages, lastPage, targetPages, date)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      data.studentName,
-      data.className,
-      data.bookId,
-      data.todayPages,
-      data.totalPages,
-      data.lastPage || 0,
-      data.targetPages || 0,
-      data.date
-    ]
-  );
-
-  const record = await db.get("SELECT * FROM records WHERE id = ?", [result.lastID]);
-
-  res.json({ ok: true, record });
+  res.json({ ok: true });
 });
 
 // 기록 조회
-app.get("/records", async (req, res) => {
-  const records = await db.all("SELECT * FROM records");
-  res.json({ ok: true, records });
+app.get("/records", (req, res) => {
+  const records = db.prepare("SELECT * FROM records").all();
+  res.json(records);
 });
 
-//삭제
-app.delete("/records/:id", async (req,res)=>{
-  await db.run("DELETE FROM records WHERE id=?", [req.params.id]);
-  res.json({ok:true});
+// 기록 삭제 (교사만)
+app.delete("/records/:id", authMiddleware, (req, res) => {
+  if (req.user.role !== "teacher" && req.user.role !== "admin") {
+    return res.status(403).json({ error: "교사만 삭제 가능" });
+  }
+
+  db.prepare("DELETE FROM records WHERE id=?").run(req.params.id);
+
+  res.json({ ok: true });
 });
 
-/* =========================
-   🚀 서버 시작
-========================= */
+/* ---------------- 서버 시작 ---------------- */
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on ${PORT}`);
 });
