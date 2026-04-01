@@ -1,907 +1,138 @@
-<!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8" />
-  <title>온책읽기 독서 기록</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet" />
-  <!-- Google Identity Services -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <style>
-    :root {
-      --bg: #f5f7fb;
-      --card-bg: #ffffff;
-      --primary: #4b6bfb;
-      --primary-soft: #e4ebff;
-      --accent: #ffb020;
-      --text-main: #111827;
-      --text-sub: #6b7280;
-      --border: #e5e7eb;
-      --radius-lg: 18px;
-      --shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.08);
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: "Pretendard", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-size: clamp(13px, 0.85vw + 10px, 16px);
-      background: radial-gradient(circle at top left, #eef2ff, #f9fafb 55%);
-      color: var(--text-main);
-    }
-    .app-shell { max-width: 1120px; margin: 24px auto 40px; padding: 0 16px; }
+// server.js
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import { OAuth2Client } from "google-auth-library";
 
-    header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 12px; gap: 12px;
-    }
-    .brand { display: flex; align-items: center; gap: 10px; }
-    .brand-logo {
-      width: 40px; height: 40px; border-radius: 14px;
-      background: conic-gradient(from 160deg, #4b6bfb, #22c55e, #f97316, #4b6bfb);
-      box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4);
-      display: flex; align-items: center; justify-content: center;
-      color: white; font-weight: 800;
-      font-size: clamp(16px, 1.3vw + 10px, 20px);
-    }
-    .brand-text-main {
-      font-size: clamp(18px, 1.4vw + 12px, 22px);
-      font-weight: 700; letter-spacing: -0.03em;
-    }
-    .brand-text-sub {
-      font-size: clamp(11px, 0.7vw + 8px, 13px);
-      color: var(--text-sub);
-    }
+dotenv.config();
 
-    .role-toggle {
-      display: inline-flex; padding: 4px; border-radius: 999px;
-      background: #e5e7eb; gap: 4px;
-    }
-    .role-toggle button {
-      border: none; border-radius: 999px; padding: 6px 14px;
-      font-size: clamp(11px, 0.6vw + 8px, 13px);
-      cursor: pointer; background: transparent;
-      color: var(--text-sub); transition: all 0.18s ease;
-    }
-    .role-toggle button.active {
-      background: #ffffff; color: var(--text-main); font-weight: 600;
-      box-shadow: 0 6px 16px rgba(148, 163, 184, 0.45);
-    }
+const app = express();
+const PORT = process.env.PORT || 3000;
+const CLIENT_ID = "468945736758-5qec11vjns3jhta8sm6v936bp5nv39p0.apps.googleusercontent.com"
+const ADMIN_SECRET = "CLASSROOM-SECRET";
 
-    main { display: flex; flex-direction: column; gap: 16px; }
-
-    /* 로그인/동의 카드 */
-    .login-card {
-      background: var(--card-bg);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-soft);
-      padding: 10px 16px;
-      margin-bottom: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .login-info-title {
-      font-size: clamp(13px, 0.9vw + 10px, 15px);
-      font-weight: 600;
-    }
-    .login-info-desc {
-      font-size: clamp(10px, 0.5vw + 7px, 12px);
-      color: var(--text-sub);
-    }
-    .login-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .login-name-display {
-      font-size: clamp(11px, 0.6vw + 8px, 13px);
-      color: var(--text-sub);
-    }
-    .google-btn {
-      border-radius: 999px;
-      border: 1px solid #d1d5db;
-      background: #ffffff;
-      padding: 6px 12px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-      font-size: clamp(11px, 0.6vw + 8px, 13px);
-      box-shadow: 0 3px 6px rgba(15, 23, 42, 0.08);
-    }
-    .google-btn-icon {
-      width: 16px;
-      height: 16px;
-      border-radius: 3px;
-      background: conic-gradient(from 45deg,#4285F4,#34A853,#FBBC05,#EA4335,#4285F4);
-    }
-
-    /* 숨겨진 GSI 버튼 컨테이너 */
-    #gsi-button-container {
-      position: absolute;
-      top: -10000px;
-      left: -10000px;
-      visibility: hidden;
-    }
-
-    /* 책 선반 */
-    .shelf-card {
-      background: var(--card-bg);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-soft);
-      padding: 12px 16px 10px;
-      margin-bottom: 6px;
-    }
-    .shelf-header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 6px; gap: 10px;
-    }
-    .shelf-title {
-      font-size: clamp(13px, 0.9vw + 10px, 15px);
-      font-weight: 600; letter-spacing: -0.01em;
-    }
-    .shelf-sub {
-      font-size: clamp(10px, 0.5vw + 7px, 12px);
-      color: var(--text-sub);
-    }
-    .shelf-strip {
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-      scroll-snap-type: x mandatory;
-    }
-    .shelf-strip::-webkit-scrollbar { height: 4px; }
-    .shelf-strip::-webkit-scrollbar-thumb {
-      background: #cbd5f5; border-radius: 999px;
-    }
-    .book-chip {
-      min-width: 120px;
-      max-width: 160px;
-      flex: 0 0 auto;
-      scroll-snap-align: start;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #eef2ff, #e0ecff);
-      padding: 8px 10px;
-      display: flex; flex-direction: column;
-      gap: 4px;
-      font-size: clamp(11px, 0.7vw + 8px, 13px);
-    }
-    .book-chip-title { font-weight: 600; line-height: 1.2; }
-    .book-chip-meta { font-size: clamp(10px, 0.5vw + 7px, 11px); color: var(--text-sub); }
-
-    .summary-grid {
-      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;
-    }
-    .summary-card {
-      background: var(--card-bg); border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-soft); padding: 14px 16px;
-      display: flex; flex-direction: column; gap: 8px;
-    }
-    .summary-label {
-      font-size: clamp(10px, 0.6vw + 7px, 12px);
-      color: var(--text-sub);
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .summary-pill {
-      padding: 3px 8px; border-radius: 999px;
-      background: var(--primary-soft); color: var(--primary);
-      font-size: clamp(9px, 0.4vw + 7px, 11px); font-weight: 600;
-    }
-    .summary-main { display: flex; align-items: baseline; gap: 6px; }
-    .summary-value {
-      font-size: clamp(18px, 1.2vw + 14px, 24px);
-      font-weight: 700;
-    }
-    .summary-unit {
-      font-size: clamp(10px, 0.5vw + 7px, 12px);
-      color: var(--text-sub);
-    }
-    .summary-foot {
-      display: flex; align-items: center; justify-content: space-between;
-      font-size: clamp(10px, 0.5vw + 7px, 12px);
-      color: var(--text-sub);
-    }
-    .summary-chip {
-      padding: 3px 9px; border-radius: 999px;
-      background: #ecfdf3; color: #16a34a;
-      font-weight: 500;
-      font-size: clamp(9px, 0.4vw + 7px, 11px);
-    }
-
-    .content-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-      gap: 16px; align-items: start;
-    }
-    .card {
-      background: var(--card-bg); border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-soft); padding: 16px 16px 14px;
-    }
-    .card-header {
-      display: flex; justify-content: space-between;
-      align-items: center; margin-bottom: 10px; gap: 10px;
-    }
-    .card-title {
-      font-size: clamp(13px, 0.9vw + 10px, 15px);
-      font-weight: 600; letter-spacing: -0.01em;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .card-badge {
-      font-size: clamp(10px, 0.5vw + 7px, 11px);
-      padding: 3px 8px; border-radius: 999px;
-      background: #eef2ff; color: #4b6bfb; font-weight: 500;
-    }
-    .card-desc {
-      font-size: clamp(10px, 0.5vw + 7px, 12px);
-      color: var(--text-sub);
-    }
-
-    .form-grid {
-      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px;
-    }
-    .form-group { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
-    label { font-size: clamp(11px, 0.6vw + 8px, 13px); }
-    label span.req { color: #ef4444; margin-left: 4px; }
-    input[type="text"], input[type="number"], select {
-      border-radius: 9px; border: 1px solid var(--border); padding: 7px 9px;
-      font-size: clamp(11px, 0.6vw + 8px, 13px);
-      outline: none;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
-      background: #f9fafb;
-    }
-    input[type="text"]:focus, input[type="number"]:focus, select:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.2);
-      background: #ffffff;
-    }
-    .inline {
-      display: flex; align-items: center; gap: 6px;
-      font-size: clamp(10px, 0.5vw + 7px, 12px); color: var(--text-sub);
-    }
-
-    .btn-row {
-      margin-top: 10px; display: flex; justify-content: flex-end;
-      gap: 8px; font-size: 12px;
-    }
-    .btn {
-      border-radius: 999px; border: none; padding: 7px 16px;
-      font-size: clamp(11px, 0.6vw + 8px, 13px);
-      font-weight: 500; cursor: pointer;
-      display: inline-flex; align-items: center; gap: 6px;
-      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
-      white-space: nowrap;
-    }
-    .btn:active { transform: translateY(1px); box-shadow: none; }
-    .btn-ghost { background: transparent; color: var(--text-sub); }
-    .btn-primary {
-      background: linear-gradient(135deg, #4b6bfb, #6366f1);
-      color: #ffffff; box-shadow: 0 10px 22px rgba(79, 70, 229, 0.55);
-    }
-    .btn-primary:hover { filter: brightness(1.03); }
-    .btn-primary span.dot {
-      width: 6px; height: 6px; border-radius: 999px;
-      background: rgba(255, 255, 255, 0.7);
-    }
-
-    .table-card { margin-top: 2px; }
-    .table-wrapper { width: 100%; overflow-x: auto; margin-top: 8px; }
-    table { width: 100%; border-collapse: collapse; font-size: clamp(11px, 0.6vw + 8px, 13px); min-width: 560px; }
-    thead { background: #f3f4ff; }
-    th, td {
-      padding: 7px 9px; text-align: left; border-bottom: 1px solid #edf0f5;
-    }
-    th { font-weight: 600; color: #4b5563; font-size: clamp(10px, 0.55vw + 7px, 12px); }
-    tbody tr:nth-child(even) { background: #f9fafb; }
-    .tag {
-      display: inline-flex; align-items: center;
-      padding: 2px 7px; border-radius: 999px;
-      font-size: clamp(9px, 0.45vw + 7px, 11px); gap: 4px;
-    }
-    .tag-book { background: #eef2ff; color: #4b6bfb; }
-    .tag-done { background: #ecfdf3; color: #15803d; }
-    .tag-progress { background: #fef3c7; color: #b45309; }
-    .progress-bar-shell {
-      width: 100%; height: 6px; border-radius: 999px;
-      background: #e5e7eb; overflow: hidden;
-    }
-    .progress-bar-fill {
-      height: 100%; border-radius: 999px;
-      background: linear-gradient(90deg, #4b6bfb, #22c55e); width: 60%;
-    }
-    .table-footnote {
-      margin-top: 6px; font-size: clamp(9px, 0.45vw + 7px, 11px);
-      color: var(--text-sub);
-      display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
-    }
-
-    .teacher-only { display: block; }
-    .student-only { display: none; }
-
-    .privacy-card {
-      margin-top: 14px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1px solid #e5e7eb;
-      background: #f9fafb;
-      font-size: clamp(10px, 0.5vw + 7px, 12px);
-      color: var(--text-sub);
-    }
-    .privacy-title { font-weight: 600; color: #111827; margin-bottom: 4px; }
-    .privacy-list { margin: 4px 0 0; padding-left: 16px; }
-    .privacy-list li { margin-bottom: 2px; }
-
-    /* 모달 */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.45);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 40;
-    }
-    .modal-dialog {
-      width: min(480px, 90vw);
-      max-height: 90vh;
-      background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.4);
-      display: flex;
-      flex-direction: column;
-    }
-    .modal-header {
-      padding: 10px 14px 8px;
-      border-bottom: 1px solid #e5e7eb;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .modal-title {
-      font-size: clamp(14px, 1vw + 11px, 16px);
-      font-weight: 600;
-    }
-    .modal-close-btn {
-      border: none;
-      background: transparent;
-      font-size: 18px;
-      cursor: pointer;
-      line-height: 1;
-    }
-    .modal-body {
-      padding: 10px 14px;
-      font-size: clamp(11px, 0.6vw + 8px, 13px);
-      color: var(--text-sub);
-      overflow-y: auto;
-    }
-    .modal-section-title {
-      font-weight: 600;
-      color: #111827;
-      margin: 8px 0 4px;
-    }
-    .modal-body ul {
-      margin: 0 0 4px;
-      padding-left: 18px;
-    }
-    .modal-input-group {
-      margin-top: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .modal-input-group input {
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      padding: 6px 8px;
-      font-size: 12px;
-    }
-    .modal-consent-label {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 8px;
-    }
-    .modal-footer {
-      padding: 8px 14px 10px;
-      border-top: 1px solid #e5e7eb;
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-    }
-
-    @media (max-width: 900px) {
-      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .content-grid { grid-template-columns: minmax(0, 1fr); }
-    }
-    @media (max-width: 640px) {
-      header { flex-direction: column; align-items: flex-start; }
-      .summary-grid { grid-template-columns: minmax(0, 1fr); }
-      .form-grid { grid-template-columns: minmax(0, 1fr); }
-      .btn-row { justify-content: stretch; }
-      .btn-row .btn { flex: 1; justify-content: center; }
-    }
-  </style>
-</head>
-<body>
-  <div class="app-shell">
-    <header>
-      <div class="brand">
-        <div class="brand-logo">북</div>
-        <div>
-          <div class="brand-text-main">온책읽기 독서 대시보드</div>
-          <div class="brand-text-sub">학급 한 권 읽기 · 쪽수 기반 독서 기록</div>
-        </div>
-      </div>
-      <div class="role-toggle">
-        <button id="teacher-mode-btn" class="active" type="button">교사 모드</button>
-        <button id="student-mode-btn" type="button">학생 모드</button>
-      </div>
-    </header>
-
-    <!-- 로그인/동의 영역 -->
-    <section class="login-card">
-      <div>
-        <div class="login-info-title">로그인 및 개인정보 이용 안내</div>
-        <div class="login-info-desc">
-          이 서비스는 학생의 이름(또는 번호)·반·읽은 쪽수만 사용합니다.
-        </div>
-      </div>
-      <div class="login-right">
-        <button type="button" class="google-btn" id="google-login-ui-btn">
-          <span class="google-btn-icon"></span>
-          <span>구글 계정으로 로그인</span>
-        </button>
-        <button type="button" class="google-btn" id="open-privacy-modal-btn">
-          <span class="google-btn-icon"></span>
-          <span>개인정보 처리방침 보기</span>
-        </button>
-        <span class="login-name-display" id="login-status-text">로그인 안 됨 · 미동의</span>
-      </div>
-    </section>
-
-    <!-- GSI 버튼 컨테이너 -->
-    <div id="gsi-button-container"></div>
-
-    <!-- 책 선반 UI -->
-    <section class="shelf-card">
-      <div class="shelf-header">
-        <div class="shelf-title">우리 반 온책읽기 책장</div>
-        <div class="shelf-sub" id="shelf-count-text">등록된 도서 0권</div>
-      </div>
-      <div class="shelf-strip" id="book-shelf"></div>
-    </section>
-
-    <main>
-      <!-- 상단 요약 -->
-      <section class="summary-grid">
-        <article class="summary-card">
-          <div class="summary-label">
-            <span>오늘 읽은 쪽수(학급)</span>
-            <span class="summary-pill">Today</span>
-          </div>
-          <div class="summary-main">
-            <div class="summary-value" id="summary-pages">0</div>
-            <div class="summary-unit">쪽</div>
-          </div>
-          <div class="summary-foot">
-            <span id="summary-compare">어제보다 +0쪽</span>
-            <span class="summary-chip" id="summary-goal">목표까지 0쪽 남음</span>
-          </div>
-        </article>
-
-        <article class="summary-card">
-          <div class="summary-label">
-            <span>학생 1인당 평균</span>
-            <span class="summary-pill">Today</span>
-          </div>
-          <div class="summary-main">
-            <div class="summary-value" id="summary-avg">0</div>
-            <div class="summary-unit">쪽/인</div>
-          </div>
-          <div class="summary-foot">
-            <span id="summary-students">참여 학생: 0명</span>
-            <span id="summary-done">완독 학생: 0명</span>
-          </div>
-        </article>
-
-        <article class="summary-card">
-          <div class="summary-label">
-            <span>현재 온책읽기</span>
-            <span class="summary-pill">Book</span>
-          </div>
-          <div class="summary-main">
-            <div class="summary-value" id="summary-book">미지정</div>
-          </div>
-          <div class="summary-foot">
-            <span id="summary-book-detail">총 0쪽 · 목표 일수 0일</span>
-            <span id="summary-book-progress">진행률 0%</span>
-          </div>
-        </article>
-      </section>
-
-      <!-- 가운데 영역 -->
-      <section class="content-grid">
-        <!-- 교사용 도서 등록 -->
-        <article class="card teacher-only">
-          <div class="card-header">
-            <div class="card-title">
-              도서 등록
-              <span class="card-badge">교사용</span>
-            </div>
-            <div class="card-desc">온책읽기 도서를 먼저 등록한 뒤, 학생들이 선택해 기록합니다.</div>
-          </div>
-
-          <div class="form-grid">
-            <div class="form-group">
-              <label>학급 / 반 <span class="req">*</span></label>
-              <input id="class-name-input" type="text" placeholder="예: 4-2" />
-            </div>
-            <div class="form-group">
-              <label>도서 제목 <span class="req">*</span></label>
-              <input id="book-title-input" type="text" placeholder="책 제목을 입력하세요" />
-            </div>
-            <div class="form-group">
-              <label>저자</label>
-              <input id="book-author-input" type="text" placeholder="선택 사항" />
-            </div>
-            <div class="form-group">
-              <label>전체 쪽수 <span class="req">*</span></label>
-              <input id="book-pages-input" type="number" min="1" placeholder="예: 248" />
-            </div>
-          </div>
-
-          <div class="btn-row">
-            <button class="btn btn-ghost" type="button" id="book-reset-btn">초기화</button>
-            <button class="btn btn-primary" type="button" id="book-add-btn">
-              <span class="dot"></span>
-              도서 추가
-            </button>
-          </div>
-        </article>
-
-        <!-- 학생용 입력 -->
-        <article class="card student-only">
-          <div class="card-header">
-            <div class="card-title">
-              오늘 읽기 기록
-              <span class="card-badge" style="background:#ecfdf3;color:#16a34a;">학생용</span>
-            </div>
-            <div class="card-desc">학생이 스스로 목표를 정하고, 매 수업 후 읽은 쪽수를 입력하는 화면입니다.</div>
-          </div>
-
-          <div class="form-grid">
-            <div class="form-group">
-              <label>이름 또는 번호 <span class="req">*</span></label>
-              <input id="student-name-input" type="text" placeholder="예: 12 홍길동" />
-            </div>
-            <div class="form-group">
-              <label>반 <span class="req">*</span></label>
-              <input id="student-class-input" type="text" placeholder="예: 4-2" />
-            </div>
-            <div class="form-group">
-              <label>도서 선택 <span class="req">*</span></label>
-              <select id="student-book-select">
-                <option value="">온책읽기 도서를 선택하세요</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>오늘 읽은 쪽수 <span class="req">*</span></label>
-              <input id="today-pages-input" type="number" min="0" placeholder="예: 12" />
-            </div>
-            <div class="form-group">
-              <label>오늘 마지막 쪽 번호</label>
-              <input id="last-page-input" type="number" min="0" placeholder="예: 38" />
-            </div>
-            <div class="form-group">
-              <label>나의 목표 쪽수</label>
-              <div class="inline">
-                <input id="target-pages-input" type="number" min="0" placeholder="예: 150" style="flex:1;" />
-                <span>전체 중 내가 정한 목표</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="btn-row">
-            <button class="btn btn-ghost" type="button" id="record-reset-btn">오늘 기록 초기화</button>
-            <button class="btn btn-primary" type="button" id="record-save-btn">
-              <span class="dot"></span>
-              기록 저장
-            </button>
-          </div>
-        </article>
-
-        <!-- 교사용 안내 카드 -->
-        <article class="card teacher-only">
-          <div class="card-header">
-            <div class="card-title">
-              학생 입력 안내
-              <span class="card-badge" style="background:#ecfdf3;color:#16a34a;">학생 안내</span>
-            </div>
-            <div class="card-desc">
-              학생 모드로 전환하면 도서 등록/통계는 숨기고 학생 입력 화면만 보여집니다.
-            </div>
-          </div>
-          <p style="font-size:clamp(10px,0.5vw+7px,12px); color:var(--text-sub); margin:0;">
-            교실 TV나 빔에 띄워 두고, 학생에게 “학생 모드”에서 자신의 이름·반·도서·쪽수만 입력하게 하면 됩니다.
-          </p>
-        </article>
-      </section>
-
-      <!-- 하단 표: 교사 모드 전용 -->
-      <section class="card table-card teacher-only">
-        <div class="card-header">
-          <div class="card-title">
-            학생별 읽은 쪽수
-            <span class="card-badge" style="background:#e0f2fe;color:#0369a1;">실시간</span>
-          </div>
-          <div class="card-desc">브라우저 localStorage에 저장된 데이터를 기준으로 표시됩니다.</div>
-        </div>
-
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>번호/이름</th>
-                <th>반</th>
-                <th>도서</th>
-                <th>오늘 읽은 쪽수</th>
-                <th>누적 쪽수</th>
-                <th>진행률</th>
-                <th>상태</th>
-              </tr>
-            </thead>
-            <tbody id="record-table-body"></tbody>
-          </table>
-        </div>
-
-        <div class="table-footnote">
-          <span>※ 이 데이터는 이 컴퓨터/브라우저에만 저장됩니다.</span>
-          <span>Railway/구글 연동 후에도 통계 목적 외에는 사용하지 않습니다.</span>
-        </div>
-      </section>
-
-      <!-- 개인정보 처리방침 요약 -->
-      <section class="privacy-card">
-        <div class="privacy-title">개인정보 처리방침 (요약)</div>
-        <ul class="privacy-list">
-          <li>이 페이지는 학생의 이름(또는 번호), 반, 읽은 쪽수, 선택한 도서 정보를 사용합니다.</li>
-          <li>현재 버전에서는 이 정보가 브라우저 localStorage에만 저장되며, 서버로 전송되지 않습니다.</li>
-          <li>Railway/구글 연동 시에도, 수집 정보는 학급 단위 독서 통계 및 수업 피드백 제공 목적에 한해 사용됩니다.</li>
-          <li>개별 학생의 개인정보를 광고·마케팅·외부 통계 서비스에 제공하지 않습니다.</li>
-        </ul>
-      </section>
-    </main>
-  </div>
-
-  <!-- 개인정보 처리방침 모달 -->
-  <div class="modal-backdrop" id="privacy-modal" style="display:none;">
-    <div class="modal-dialog">
-      <div class="modal-header">
-        <div class="modal-title">개인정보 처리방침 동의</div>
-        <button type="button" class="modal-close-btn" id="privacy-close-btn">×</button>
-      </div>
-      <div class="modal-body">
-        <p class="modal-section-title">1. 수집하는 개인정보 항목</p>
-        <ul>
-          <li>필수: 이름(또는 번호), 반, 읽은 쪽수, 선택한 도서</li>
-          <li>선택: 구글 계정 이름, 이메일</li>
-        </ul>
-
-        <p class="modal-section-title">2. 개인정보 이용 목적</p>
-        <ul>
-          <li>학급 단위 온책읽기 수업을 위한 독서량 집계 및 수업 피드백 제공</li>
-          <li>학생 개인의 독서 습관 형성 지원</li>
-        </ul>
-
-        <p class="modal-section-title">3. 개인정보 보관 및 처리 방침</p>
-        <ul>
-          <li>입력된 정보는 브라우저 및 Railway 서버 내에서만 사용됩니다.</li>
-          <li>구글 로그인 연동 시, 구글 계정 정보는 학급 출석/식별 용도로만 사용하며 읽은 쪽수 통계와 별도로 집계·분석하지 않습니다.</li>
-          <li>수집된 정보를 광고·마케팅·외부 통계 서비스에 제공하지 않습니다.</li>
-        </ul>
-
-        <p class="modal-section-title">4. 제3자 제공 및 위탁</p>
-        <ul>
-          <li>법령상 요구되는 경우를 제외하고, 제3자에게 개인정보를 제공하지 않습니다.</li>
-        </ul>
-
-        <p class="modal-section-title">5. 동의 철회 및 삭제</p>
-        <ul>
-          <li>교사는 언제든지 브라우저 데이터 삭제 또는 관리자에게 요청하여 데이터를 삭제할 수 있습니다.</li>
-        </ul>
-
-        <hr />
-
-        <div class="modal-input-group">
-          <label>이름 또는 표시 이름</label>
-          <input type="text" id="modal-name-input" placeholder="예: 12 홍길동 / 별명" />
-        </div>
-        <label class="modal-consent-label">
-          <input type="checkbox" id="modal-consent-checkbox" />
-          위 개인정보 처리방침을 읽고 동의합니다.
-        </label>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-ghost" id="privacy-cancel-btn">취소</button>
-        <button type="button" class="btn btn-primary" id="privacy-accept-btn">동의하고 닫기</button>
-      </div>
-    </div>
-  </div>
-  
-<script>
-const API_URL = "https://zoological-adventure-production.up.railway.app/"; // 🔥 무조건 바꿔라
-
-// =====================
-// DOM
-// =====================
-const studentBookSelect = document.getElementById("student-book-select");
-const bookAddBtn = document.getElementById("book-add-btn");
-
-const bookTitleInput = document.getElementById("book-title-input");
-const bookAuthorInput = document.getElementById("book-author-input");
-const bookPagesInput = document.getElementById("book-pages-input");
-const classNameInput = document.getElementById("class-name-input");
-
-const studentNameInput = document.getElementById("student-name-input");
-const studentClassInput = document.getElementById("student-class-input");
-const todayPagesInput = document.getElementById("today-pages-input");
-
-const recordSaveBtn = document.getElementById("record-save-btn");
-const recordTableBody = document.getElementById("record-table-body");
-
-const shelf = document.getElementById("book-shelf");
-
-// =====================
-// BOOKS
-// =====================
-async function loadBooks() {
-  try {
-    const res = await fetch(`${API_URL}/books`);
-    const data = await res.json();
-
-    if (!Array.isArray(data)) {
-      console.error("books 오류:", data);
-      return [];
-    }
-
-    return data;
-  } catch (e) {
-    console.error("books fetch 실패:", e);
-    return [];
-  }
+if (!CLIENT_ID) {
+  console.warn("⚠ GOOGLE_CLIENT_ID 환경 변수가 설정되지 않았습니다.");
 }
 
-async function refreshBookSelect() {
-  const books = await loadBooks();
+const client = new OAuth2Client(CLIENT_ID);
 
-  studentBookSelect.innerHTML = '<option value="">온책읽기 도서를 선택하세요</option>';
-  shelf.innerHTML = "";
+app.use(cors());
+app.use(express.json());
+app.use(express.static("public")); // public/index.html 제공
 
-  books.forEach(book => {
-    // select
-    const option = document.createElement("option");
-    option.value = book.id;
-    option.textContent = `${book.title} (${book.className})`;
-    studentBookSelect.appendChild(option);
+// ---- 메모리 사용자/역할 저장 (이메일 기준) ----
+/**
+ * users 구조:
+ * {
+ *   [email]: {
+ *      email,
+ *      name,
+ *      picture,
+ *      role: 'student' | 'teacher' | 'admin'
+ *   }
+ * }
+ */
+const users = {};
 
-    // shelf
-    const div = document.createElement("div");
-    div.className = "book-chip";
-    div.innerHTML = `
-      <div class="book-chip-title">${book.title}</div>
-      <div class="book-chip-meta">${book.className} · ${book.pages}쪽</div>
-    `;
-    shelf.appendChild(div);
+// Google ID 토큰 검증
+async function verifyGoogleToken(idToken) {
+  const ticket = await client.verifyIdToken({
+    idToken,
+    audience: CLIENT_ID
   });
+  const payload = ticket.getPayload();
+  return payload;
 }
 
-// =====================
-// BOOK ADD
-// =====================
-bookAddBtn.addEventListener("click", async () => {
-  const className = classNameInput.value.trim();
-  const title = bookTitleInput.value.trim();
-  const author = bookAuthorInput.value.trim();
-  const pages = parseInt(bookPagesInput.value, 10);
-
-  if (!className || !title || !pages) {
-    alert("반, 제목, 쪽수 입력");
-    return;
-  }
-
-  await fetch(`${API_URL}/books`, {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ title, className, pages, author })
-  });
-
-  alert("도서 추가 완료");
-
-  refreshBookSelect();
+// 헬스 체크
+app.get("/health", (req, res) => {
+  res.json({ ok: true });
 });
 
-// =====================
-// RECORDS
-// =====================
-async function loadRecords() {
-  try {
-    const res = await fetch(`${API_URL}/records`);
-    const data = await res.json();
+// Google 로그인: 토큰 검증 + 사용자 정보/역할 반환
+app.post("/auth/google", async (req, res) => {
+  const { credential } = req.body;
 
-    if (!Array.isArray(data)) {
-      console.error("records 오류:", data);
-      return [];
+  if (!credential) {
+    return res.status(400).json({ ok: false, error: "credential(ID 토큰)이 없습니다." });
+  }
+
+  try {
+    const payload = await verifyGoogleToken(credential);
+
+    const email = payload.email;
+    const name = payload.name;
+    const picture = payload.picture;
+
+    if (!email) {
+      return res.status(400).json({ ok: false, error: "Google 계정 이메일 정보를 가져오지 못했습니다." });
     }
 
-    return data;
-  } catch (e) {
-    console.error("records fetch 실패:", e);
-    return [];
+    // 기존에 있으면 그대로, 없으면 기본 role=student 로 생성
+    if (!users[email]) {
+      users[email] = {
+        email,
+        name,
+        picture,
+        role: "student"
+      };
+    } else {
+      users[email].name = name;
+      users[email].picture = picture;
+    }
+
+    res.json({
+      ok: true,
+      user: users[email]
+    });
+  } catch (err) {
+    console.error("Google ID 토큰 검증 실패:", err.message);
+    res.status(401).json({ ok: false, error: "유효하지 않은 Google ID 토큰입니다." });
   }
-}
-
-function renderRecords(records) {
-  recordTableBody.innerHTML = "";
-
-  records.forEach(rec => {
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${rec.studentName}</td>
-      <td>${rec.className}</td>
-      <td>${rec.todayPages}쪽</td>
-    `;
-
-    recordTableBody.appendChild(tr);
-  });
-}
-
-// =====================
-// RECORD SAVE
-// =====================
-recordSaveBtn.addEventListener("click", async () => {
-  const studentName = studentNameInput.value.trim();
-  const className = studentClassInput.value.trim();
-  const bookId = studentBookSelect.value;
-  const todayPages = parseInt(todayPagesInput.value, 10) || 0;
-
-  if (!studentName || !className || !bookId) {
-    alert("입력 안됨");
-    return;
-  }
-
-  await fetch(`${API_URL}/records`, {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({
-      studentName,
-      className,
-      bookId,
-      todayPages,
-      totalPages: todayPages
-    })
-  });
-
-  alert("기록 저장 완료");
-
-  const records = await loadRecords();
-  renderRecords(records);
 });
 
-// =====================
-// INIT
-// =====================
-window.onload = async () => {
-  await refreshBookSelect();
+// ---- 관리자용: 역할 변경 API (이메일 기준) ----
+// 예: 크롬 콘솔에서
+// fetch("/admin/set-role", {
+//   method: "POST",
+//   headers: { "Content-Type": "application/json" },
+//   body: JSON.stringify({
+//     email: "교사메일@example.com",
+//     role: "teacher",   // student | teacher | admin
+//     secret: "CLASSROOM-SECRET"
+//   })
+// }).then(r=>r.json()).then(console.log);
+app.post("/admin/set-role", (req, res) => {
+  const { email, role, secret } = req.body;
 
-  const records = await loadRecords();
-  renderRecords(records);
-};
-</script>
-</body>
-</html>
+  if (secret !== ADMIN_SECRET) {
+    return res.status(403).json({ ok: false, error: "관리자 비밀 코드가 올바르지 않습니다." });
+  }
+  if (!email) {
+    return res.status(400).json({ ok: false, error: "email이 필요합니다." });
+  }
+  if (!["student", "teacher", "admin"].includes(role)) {
+    return res.status(400).json({ ok: false, error: "역할은 student | teacher | admin 중 하나여야 합니다." });
+  }
+  if (!users[email]) {
+    return res.status(404).json({ ok: false, error: "해당 이메일 사용자가 없습니다. 먼저 Google 로그인으로 생성해 주세요." });
+  }
+
+  users[email].role = role;
+  res.json({ ok: true, user: users[email] });
+});
+
+// ---- 관리자용: 전체 사용자/역할 조회 ----
+// fetch("/admin/users?secret=CLASSROOM-SECRET").then(r=>r.json()).then(console.log);
+app.get("/admin/users", (req, res) => {
+  const { secret } = req.query;
+  if (secret !== ADMIN_SECRET) {
+    return res.status(403).json({ ok: false, error: "관리자 비밀 코드가 올바르지 않습니다." });
+  }
+  res.json({ ok: true, users });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+});
