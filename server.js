@@ -247,6 +247,12 @@ app.get("/records", async (req, res) => {
   res.json({ ok: true, records });
 });
 
+//삭제
+app.delete("/records/:id", async (req,res)=>{
+  await db.run("DELETE FROM records WHERE id=?", [req.params.id]);
+  res.json({ok:true});
+});
+
 /* =========================
    🚀 서버 시작
 ========================= */
