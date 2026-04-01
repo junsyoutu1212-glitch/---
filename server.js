@@ -3,185 +3,182 @@ import cors from "cors";
 import fs from "fs";
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+
 app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
 const DB_FILE = "./db.json";
 
-// ===== 초기 DB =====
+// =====================
+// DB 초기화
+// =====================
 if (!fs.existsSync(DB_FILE)) {
   fs.writeFileSync(DB_FILE, JSON.stringify({
     books: [],
-    records: []
+    records: [],
+    users: []
   }, null, 2));
 }
 
-// ===== DB 함수 =====
+// =====================
+// DB 함수
+// =====================
 function readDB() {
-  try {
-    return JSON.parse(fs.readFileSync(DB_FILE));
-  } catch (err) {
-    console.error("DB 읽기 실패:", err);
-    return { books: [], records: [] };
-  }
+  return JSON.parse(fs.readFileSync(DB_FILE, "utf-8"));
 }
 
 function writeDB(data) {
-  try {
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
-  } catch (err) {
-    console.error("DB 저장 실패:", err);
-  }
+  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
 }
 
-// ===== 유틸 =====
-function isValidNumber(n) {
-  return typeof n === "number" && !isNaN(n);
-}
-
-// ===== 로그 미들웨어 =====
+// =====================
+// 로그 미들웨어
+// =====================
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
 });
 
-// =========================
-// 📚 책 목록 조회
-// =========================
+// =====================
+// 기본 체크
+// =====================
+app.get("/", (req, res) => {
+  res.json({ ok: true, msg: "Server running" });
+});
+
+// =====================
+// 📚 BOOK API
+// =====================
+
+// 책 목록
 app.get("/books", (req, res) => {
   const db = readDB();
   res.json(db.books);
 });
 
-// =========================
-// 📚 책 추가
-// =========================
+// 책 추가
 app.post("/books", (req, res) => {
-  const { className, title, author, pages } = req.body;
+  const { title, className, pages, author } = req.body;
 
-  if (!className || !title || !isValidNumber(pages)) {
-    return res.status(400).json({
-      ok: false,
-      error: "필수값 누락"
-    });
+  if (!title || !className || !pages) {
+    return res.status(400).json({ ok: false, error: "필수값 없음" });
   }
 
   const db = readDB();
 
   const newBook = {
-    id: "book_" + Date.now(),
-    className,
+    id: Date.now().toString(),
     title,
+    className,
+    pages: Number(pages),
     author: author || "",
-    pages
+    createdAt: new Date().toISOString()
   };
 
   db.books.push(newBook);
   writeDB(db);
 
-  res.json({
-    ok: true,
-    book: newBook
-  });
+  res.json({ ok: true, book: newBook });
 });
 
-// =========================
-// 📚 책 삭제 (교사용)
-// =========================
-app.delete("/books/:id", (req, res) => {
-  const { id } = req.params;
-  const db = readDB();
+// =====================
+// 📊 RECORD API
+// =====================
 
-  db.books = db.books.filter(b => b.id !== id);
-  writeDB(db);
-
-  res.json({ ok: true });
-});
-
-// =========================
-// 📖 기록 조회
-// =========================
+// 기록 조회
 app.get("/records", (req, res) => {
   const db = readDB();
   res.json(db.records);
 });
 
-// =========================
-// 📖 기록 저장
-// =========================
+// 기록 저장
 app.post("/records", (req, res) => {
-  const { studentName, className, bookId, todayPages } = req.body;
-
-  if (!studentName || !className || !bookId || !isValidNumber(todayPages)) {
-    return res.status(400).json({
-      ok: false,
-      error: "입력값 오류"
-    });
-  }
-
-  const db = readDB();
-
-  const key = `${studentName}|${className}|${bookId}`;
-
-  const prev = db.records.filter(r => r.key === key);
-  let totalPages = todayPages;
-
-  if (prev.length > 0) {
-    const max = Math.max(...prev.map(p => p.totalPages));
-    totalPages = max + todayPages;
-  }
-
-  const record = {
-    key,
+  const {
     studentName,
     className,
     bookId,
     todayPages,
-    totalPages,
-    date: new Date().toISOString()
+    totalPages
+  } = req.body;
+
+  if (!studentName || !className || !bookId) {
+    return res.status(400).json({ ok: false, error: "필수값 없음" });
+  }
+
+  const db = readDB();
+
+  const newRecord = {
+    id: Date.now().toString(),
+    studentName,
+    className,
+    bookId,
+    todayPages: Number(todayPages) || 0,
+    totalPages: Number(totalPages) || 0,
+    createdAt: new Date().toISOString()
   };
 
-  db.records.push(record);
+  db.records.push(newRecord);
   writeDB(db);
 
-  res.json({
-    ok: true,
-    record
-  });
+  res.json({ ok: true, record: newRecord });
 });
 
-// =========================
-// 📖 기록 삭제
-// =========================
-app.delete("/records", (req, res) => {
+// =====================
+// 👤 USER / ROLE (관리자)
+// =====================
+
+// 사용자 등록 (자동 role 부여)
+app.post("/users", (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ ok: false });
+  }
+
   const db = readDB();
-  db.records = [];
+
+  let user = db.users.find(u => u.email === email);
+
+  if (!user) {
+    user = {
+      email,
+      role: "student" // 기본 학생
+    };
+    db.users.push(user);
+    writeDB(db);
+  }
+
+  res.json({ ok: true, user });
+});
+
+// 🔥 관리자 지정 (핵심)
+app.post("/admin", (req, res) => {
+  const { email } = req.body;
+
+  const db = readDB();
+  const user = db.users.find(u => u.email === email);
+
+  if (!user) {
+    return res.status(404).json({ ok: false, error: "유저 없음" });
+  }
+
+  user.role = "admin";
   writeDB(db);
 
-  res.json({ ok: true });
+  res.json({ ok: true, user });
 });
 
-// =========================
-// 📊 상태 체크
-// =========================
-app.get("/health", (req, res) => {
-  res.json({
-    status: "ok",
-    time: new Date().toISOString()
-  });
+// =====================
+// 에러 처리
+// =====================
+app.use((req, res) => {
+  res.status(404).json({ ok: false, error: "Not Found" });
 });
 
-// =========================
-// 기본
-// =========================
-app.get("/", (req, res) => {
-  res.send("Reading Dashboard API Running");
-});
-
-// =========================
-// 서버 실행
-// =========================
+// =====================
+// 실행
+// =====================
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
