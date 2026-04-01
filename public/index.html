@@ -732,69 +732,64 @@
       </div>
     </div>
   </div>
+  
 <script>
-const API_BASE = "zoological-adventure-production.up.railway.app"; // Railway면 주소 넣어
+const API_URL = "https://zoological-adventure-production.up.railway.app/"; // 🔥 무조건 바꿔라
 
-// ===== 서버 통신 =====
-async function fetchBooksFromServer() {
-  const res = await fetch(API_BASE + "/books");
-  return await res.json();
-}
-
-async function fetchRecordsFromServer() {
-  const res = await fetch(API_BASE + "/records");
-  return await res.json();
-}
-
-// ===== 기존 변수 그대로 =====
-const STORAGE_KEY_PROFILE = "readingDashboardProfile";
-
-// ===== 프로필 =====
-function loadProfile() {
-  const data = localStorage.getItem(STORAGE_KEY_PROFILE);
-  return data ? JSON.parse(data) : { name: "", consent: false, google: null, role: "student" };
-}
-function saveProfile(profile) {
-  localStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(profile));
-}
-function getCurrentRole() {
-  return loadProfile().role || "student";
-}
-
-// ===== UI 요소 =====
-const bookAddBtn = document.getElementById("book-add-btn");
-const recordSaveBtn = document.getElementById("record-save-btn");
-
+// =====================
+// DOM
+// =====================
 const studentBookSelect = document.getElementById("student-book-select");
+const bookAddBtn = document.getElementById("book-add-btn");
+
+const bookTitleInput = document.getElementById("book-title-input");
+const bookAuthorInput = document.getElementById("book-author-input");
+const bookPagesInput = document.getElementById("book-pages-input");
+const classNameInput = document.getElementById("class-name-input");
+
+const studentNameInput = document.getElementById("student-name-input");
+const studentClassInput = document.getElementById("student-class-input");
+const todayPagesInput = document.getElementById("today-pages-input");
+
+const recordSaveBtn = document.getElementById("record-save-btn");
 const recordTableBody = document.getElementById("record-table-body");
 
-const summaryPages = document.getElementById("summary-pages");
-const summaryAvg = document.getElementById("summary-avg");
-const summaryStudents = document.getElementById("summary-students");
-const summaryDone = document.getElementById("summary-done");
-
-const summaryBook = document.getElementById("summary-book");
-const summaryBookDetail = document.getElementById("summary-book-detail");
-const summaryBookProgress = document.getElementById("summary-book-progress");
-
 const shelf = document.getElementById("book-shelf");
-const shelfCountText = document.getElementById("shelf-count-text");
 
-// ===== 책 렌더 =====
+// =====================
+// BOOKS
+// =====================
+async function loadBooks() {
+  try {
+    const res = await fetch(`${API_URL}/books`);
+    const data = await res.json();
+
+    if (!Array.isArray(data)) {
+      console.error("books 오류:", data);
+      return [];
+    }
+
+    return data;
+  } catch (e) {
+    console.error("books fetch 실패:", e);
+    return [];
+  }
+}
+
 async function refreshBookSelect() {
-  const books = await fetchBooksFromServer();
+  const books = await loadBooks();
 
   studentBookSelect.innerHTML = '<option value="">온책읽기 도서를 선택하세요</option>';
-
   shelf.innerHTML = "";
-  shelfCountText.textContent = `등록된 도서 ${books.length}권`;
 
   books.forEach(book => {
+    // select
     const option = document.createElement("option");
     option.value = book.id;
     option.textContent = `${book.title} (${book.className})`;
     studentBookSelect.appendChild(option);
 
+    // shelf
     const div = document.createElement("div");
     div.className = "book-chip";
     div.innerHTML = `
@@ -803,107 +798,109 @@ async function refreshBookSelect() {
     `;
     shelf.appendChild(div);
   });
-
-  if (books.length > 0) {
-    const current = books[books.length - 1];
-    summaryBook.textContent = current.title;
-    summaryBookDetail.textContent = `총 ${current.pages}쪽 · ${current.className}`;
-  }
 }
 
-// ===== 기록 렌더 =====
-async function renderRecords() {
-  const records = await fetchRecordsFromServer();
-  const books = await fetchBooksFromServer();
-
-  recordTableBody.innerHTML = "";
-
-  let totalToday = 0;
-  const studentSet = new Set();
-  let doneCount = 0;
-
-  records.forEach(rec => {
-    const book = books.find(b => b.id === rec.bookId);
-    const totalPages = book ? book.pages : 0;
-
-    const progress = totalPages
-      ? Math.min(100, Math.round((rec.totalPages / totalPages) * 100))
-      : 0;
-
-    const status = progress >= 100 ? "완독" : progress >= 80 ? "거의 완독" : "읽는 중";
-
-    totalToday += rec.todayPages;
-    studentSet.add(rec.studentName + "|" + rec.className);
-    if (progress >= 100) doneCount++;
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${rec.studentName}</td>
-      <td>${rec.className}</td>
-      <td>${book ? book.title : "?"}</td>
-      <td>${rec.todayPages}</td>
-      <td>${rec.totalPages}</td>
-      <td>${progress}%</td>
-      <td>${status}</td>
-    `;
-    recordTableBody.appendChild(tr);
-  });
-
-  const studentCount = studentSet.size;
-
-  summaryPages.textContent = totalToday;
-  summaryAvg.textContent = studentCount ? Math.round(totalToday / studentCount) : 0;
-  summaryStudents.textContent = `참여 학생: ${studentCount}`;
-  summaryDone.textContent = `완독 학생: ${doneCount}`;
-}
-
-// ===== 도서 추가 =====
+// =====================
+// BOOK ADD
+// =====================
 bookAddBtn.addEventListener("click", async () => {
-  const className = document.getElementById("class-name-input").value;
-  const title = document.getElementById("book-title-input").value;
-  const author = document.getElementById("book-author-input").value;
-  const pages = parseInt(document.getElementById("book-pages-input").value);
+  const className = classNameInput.value.trim();
+  const title = bookTitleInput.value.trim();
+  const author = bookAuthorInput.value.trim();
+  const pages = parseInt(bookPagesInput.value, 10);
 
-  await fetch(API_BASE + "/books", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ className, title, author, pages })
-  });
-
-  await refreshBookSelect();
-});
-
-// ===== 기록 저장 =====
-recordSaveBtn.addEventListener("click", async () => {
-  const profile = loadProfile();
-  if (!profile.consent) {
-    alert("동의 필요");
+  if (!className || !title || !pages) {
+    alert("반, 제목, 쪽수 입력");
     return;
   }
 
-  const studentName = document.getElementById("student-name-input").value;
-  const className = document.getElementById("student-class-input").value;
-  const bookId = studentBookSelect.value;
-  const todayPages = parseInt(document.getElementById("today-pages-input").value);
-
-  await fetch(API_BASE + "/records", {
+  await fetch(`${API_URL}/books`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ title, className, pages, author })
+  });
+
+  alert("도서 추가 완료");
+
+  refreshBookSelect();
+});
+
+// =====================
+// RECORDS
+// =====================
+async function loadRecords() {
+  try {
+    const res = await fetch(`${API_URL}/records`);
+    const data = await res.json();
+
+    if (!Array.isArray(data)) {
+      console.error("records 오류:", data);
+      return [];
+    }
+
+    return data;
+  } catch (e) {
+    console.error("records fetch 실패:", e);
+    return [];
+  }
+}
+
+function renderRecords(records) {
+  recordTableBody.innerHTML = "";
+
+  records.forEach(rec => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${rec.studentName}</td>
+      <td>${rec.className}</td>
+      <td>${rec.todayPages}쪽</td>
+    `;
+
+    recordTableBody.appendChild(tr);
+  });
+}
+
+// =====================
+// RECORD SAVE
+// =====================
+recordSaveBtn.addEventListener("click", async () => {
+  const studentName = studentNameInput.value.trim();
+  const className = studentClassInput.value.trim();
+  const bookId = studentBookSelect.value;
+  const todayPages = parseInt(todayPagesInput.value, 10) || 0;
+
+  if (!studentName || !className || !bookId) {
+    alert("입력 안됨");
+    return;
+  }
+
+  await fetch(`${API_URL}/records`, {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
     body: JSON.stringify({
       studentName,
       className,
       bookId,
-      todayPages
+      todayPages,
+      totalPages: todayPages
     })
   });
 
-  await renderRecords();
+  alert("기록 저장 완료");
+
+  const records = await loadRecords();
+  renderRecords(records);
 });
 
-// ===== 초기 실행 =====
+// =====================
+// INIT
+// =====================
 window.onload = async () => {
   await refreshBookSelect();
-  await renderRecords();
+
+  const records = await loadRecords();
+  renderRecords(records);
 };
 </script>
 </body>
