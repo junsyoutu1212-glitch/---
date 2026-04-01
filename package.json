@@ -11,6 +11,6 @@
     "express": "^4.19.2",
     "google-auth-library": "^9.14.1",
     "cors": "^2.8.5",
-    "sqlite3": "^9.4.0"
+    "better-sqlite3": "^9.4.0"
   }
 }
