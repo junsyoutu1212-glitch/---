@@ -1,18 +1,25 @@
 import express from "express";
 import cors from "cors";
 import fs from "fs";
+import path from "path";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// =====================
+// 기본 설정
+// =====================
 app.use(cors());
 app.use(express.json());
 
-const DB_FILE = "./db.json";
+// 정적 파일 (HTML)
+app.use(express.static("public"));
 
 // =====================
-// DB 초기화
+// DB 설정
 // =====================
+const DB_FILE = "./db.json";
+
 if (!fs.existsSync(DB_FILE)) {
   fs.writeFileSync(DB_FILE, JSON.stringify({
     books: [],
@@ -21,9 +28,6 @@ if (!fs.existsSync(DB_FILE)) {
   }, null, 2));
 }
 
-// =====================
-// DB 함수
-// =====================
 function readDB() {
   return JSON.parse(fs.readFileSync(DB_FILE, "utf-8"));
 }
@@ -33,7 +37,7 @@ function writeDB(data) {
 }
 
 // =====================
-// 로그 미들웨어
+// 로그
 // =====================
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
@@ -41,23 +45,23 @@ app.use((req, res, next) => {
 });
 
 // =====================
-// 기본 체크
+// 📄 HTML 루트
 // =====================
 app.get("/", (req, res) => {
-  res.json({ ok: true, msg: "Server running" });
+  res.sendFile(path.resolve("public/index.html"));
 });
 
 // =====================
 // 📚 BOOK API
 // =====================
 
-// 책 목록
+// 전체 조회
 app.get("/books", (req, res) => {
   const db = readDB();
   res.json(db.books);
 });
 
-// 책 추가
+// 추가
 app.post("/books", (req, res) => {
   const { title, className, pages, author } = req.body;
 
@@ -86,13 +90,13 @@ app.post("/books", (req, res) => {
 // 📊 RECORD API
 // =====================
 
-// 기록 조회
+// 조회
 app.get("/records", (req, res) => {
   const db = readDB();
   res.json(db.records);
 });
 
-// 기록 저장
+// 저장
 app.post("/records", (req, res) => {
   const {
     studentName,
@@ -125,10 +129,10 @@ app.post("/records", (req, res) => {
 });
 
 // =====================
-// 👤 USER / ROLE (관리자)
+// 👤 USER / 관리자
 // =====================
 
-// 사용자 등록 (자동 role 부여)
+// 유저 생성 or 조회
 app.post("/users", (req, res) => {
   const { email } = req.body;
 
@@ -143,7 +147,7 @@ app.post("/users", (req, res) => {
   if (!user) {
     user = {
       email,
-      role: "student" // 기본 학생
+      role: "student"
     };
     db.users.push(user);
     writeDB(db);
@@ -152,7 +156,7 @@ app.post("/users", (req, res) => {
   res.json({ ok: true, user });
 });
 
-// 🔥 관리자 지정 (핵심)
+// 관리자 지정
 app.post("/admin", (req, res) => {
   const { email } = req.body;
 
@@ -170,7 +174,7 @@ app.post("/admin", (req, res) => {
 });
 
 // =====================
-// 에러 처리
+// ❌ 404 처리
 // =====================
 app.use((req, res) => {
   res.status(404).json({ ok: false, error: "Not Found" });
