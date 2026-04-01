@@ -1,191 +1,187 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
-import Database from "better-sqlite3";
-import jwt from "jsonwebtoken";
-import { OAuth2Client } from "google-auth-library";
-
-dotenv.config();
+import fs from "fs";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-const GOOGLE_CLIENT_ID = "468945736758-5qec11vjns3jhta8sm6v936bp5nv39p0.apps.googleusercontent.com";
-const JWT_SECRET = "SUPER_SECRET_KEY"; // 바꿔라
-const ADMIN_SECRET = "CLASSROOM-SECRET";
-
-const client = new OAuth2Client(GOOGLE_CLIENT_ID);
-
-// DB 생성
-const db = new Database("database.db");
-
-// 테이블 생성
-db.prepare(`
-CREATE TABLE IF NOT EXISTS users (
-  email TEXT PRIMARY KEY,
-  name TEXT,
-  picture TEXT,
-  role TEXT DEFAULT 'student'
-)
-`).run();
-
-db.prepare(`
-CREATE TABLE IF NOT EXISTS books (
-  id TEXT PRIMARY KEY,
-  title TEXT,
-  author TEXT,
-  pages INTEGER,
-  className TEXT
-)
-`).run();
-
-db.prepare(`
-CREATE TABLE IF NOT EXISTS records (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  studentName TEXT,
-  className TEXT,
-  bookId TEXT,
-  todayPages INTEGER,
-  totalPages INTEGER,
-  date TEXT
-)
-`).run();
-
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
 
-/* ---------------- JWT 미들웨어 ---------------- */
-function authMiddleware(req, res, next) {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ error: "토큰 없음" });
+const PORT = process.env.PORT || 3000;
+const DB_FILE = "./db.json";
 
+// ===== 초기 DB =====
+if (!fs.existsSync(DB_FILE)) {
+  fs.writeFileSync(DB_FILE, JSON.stringify({
+    books: [],
+    records: []
+  }, null, 2));
+}
+
+// ===== DB 함수 =====
+function readDB() {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch {
-    res.status(401).json({ error: "토큰 오류" });
+    return JSON.parse(fs.readFileSync(DB_FILE));
+  } catch (err) {
+    console.error("DB 읽기 실패:", err);
+    return { books: [], records: [] };
   }
 }
 
-/* ---------------- Google 로그인 ---------------- */
-app.post("/auth/google", async (req, res) => {
+function writeDB(data) {
   try {
-    const { credential } = req.body;
-
-    const ticket = await client.verifyIdToken({
-      idToken: credential,
-      audience: GOOGLE_CLIENT_ID
-    });
-
-    const payload = ticket.getPayload();
-    const { email, name, picture } = payload;
-
-    let user = db.prepare("SELECT * FROM users WHERE email=?").get(email);
-
-    if (!user) {
-      db.prepare(`
-        INSERT INTO users (email, name, picture, role)
-        VALUES (?, ?, ?, 'student')
-      `).run(email, name, picture);
-    } else {
-      db.prepare(`
-        UPDATE users SET name=?, picture=? WHERE email=?
-      `).run(name, picture, email);
-    }
-
-    user = db.prepare("SELECT * FROM users WHERE email=?").get(email);
-
-    const token = jwt.sign(
-      { email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    res.json({ ok: true, token, user });
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
   } catch (err) {
-    res.status(401).json({ ok: false, error: "로그인 실패" });
+    console.error("DB 저장 실패:", err);
   }
+}
+
+// ===== 유틸 =====
+function isValidNumber(n) {
+  return typeof n === "number" && !isNaN(n);
+}
+
+// ===== 로그 미들웨어 =====
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
 });
 
-/* ---------------- 역할 변경 (관리자) ---------------- */
-app.post("/admin/set-role", (req, res) => {
-  const { email, role, secret } = req.body;
-
-  if (secret !== ADMIN_SECRET) {
-    return res.status(403).json({ error: "권한 없음" });
-  }
-
-  db.prepare("UPDATE users SET role=? WHERE email=?").run(role, email);
-
-  res.json({ ok: true });
-});
-
-/* ---------------- 도서 ---------------- */
-
-// 도서 추가 (교사만)
-app.post("/books", authMiddleware, (req, res) => {
-  if (req.user.role !== "teacher" && req.user.role !== "admin") {
-    return res.status(403).json({ error: "교사만 가능" });
-  }
-
-  const { title, author, pages, className } = req.body;
-  const id = "book_" + Date.now();
-
-  db.prepare(`
-    INSERT INTO books (id, title, author, pages, className)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(id, title, author, pages, className);
-
-  res.json({ ok: true });
-});
-
-// 도서 목록
+// =========================
+// 📚 책 목록 조회
+// =========================
 app.get("/books", (req, res) => {
-  const books = db.prepare("SELECT * FROM books").all();
-  res.json(books);
+  const db = readDB();
+  res.json(db.books);
 });
 
-/* ---------------- 기록 ---------------- */
+// =========================
+// 📚 책 추가
+// =========================
+app.post("/books", (req, res) => {
+  const { className, title, author, pages } = req.body;
 
-// 기록 추가
-app.post("/records", authMiddleware, (req, res) => {
+  if (!className || !title || !isValidNumber(pages)) {
+    return res.status(400).json({
+      ok: false,
+      error: "필수값 누락"
+    });
+  }
+
+  const db = readDB();
+
+  const newBook = {
+    id: "book_" + Date.now(),
+    className,
+    title,
+    author: author || "",
+    pages
+  };
+
+  db.books.push(newBook);
+  writeDB(db);
+
+  res.json({
+    ok: true,
+    book: newBook
+  });
+});
+
+// =========================
+// 📚 책 삭제 (교사용)
+// =========================
+app.delete("/books/:id", (req, res) => {
+  const { id } = req.params;
+  const db = readDB();
+
+  db.books = db.books.filter(b => b.id !== id);
+  writeDB(db);
+
+  res.json({ ok: true });
+});
+
+// =========================
+// 📖 기록 조회
+// =========================
+app.get("/records", (req, res) => {
+  const db = readDB();
+  res.json(db.records);
+});
+
+// =========================
+// 📖 기록 저장
+// =========================
+app.post("/records", (req, res) => {
   const { studentName, className, bookId, todayPages } = req.body;
 
-  const prev = db.prepare(`
-    SELECT MAX(totalPages) as max FROM records
-    WHERE studentName=? AND className=? AND bookId=?
-  `).get(studentName, className, bookId);
-
-  const total = (prev?.max || 0) + todayPages;
-
-  db.prepare(`
-    INSERT INTO records (studentName, className, bookId, todayPages, totalPages, date)
-    VALUES (?, ?, ?, ?, ?, DATE('now'))
-  `).run(studentName, className, bookId, todayPages, total);
-
-  res.json({ ok: true });
-});
-
-// 기록 조회
-app.get("/records", (req, res) => {
-  const records = db.prepare("SELECT * FROM records").all();
-  res.json(records);
-});
-
-// 기록 삭제 (교사만)
-app.delete("/records/:id", authMiddleware, (req, res) => {
-  if (req.user.role !== "teacher" && req.user.role !== "admin") {
-    return res.status(403).json({ error: "교사만 삭제 가능" });
+  if (!studentName || !className || !bookId || !isValidNumber(todayPages)) {
+    return res.status(400).json({
+      ok: false,
+      error: "입력값 오류"
+    });
   }
 
-  db.prepare("DELETE FROM records WHERE id=?").run(req.params.id);
+  const db = readDB();
+
+  const key = `${studentName}|${className}|${bookId}`;
+
+  const prev = db.records.filter(r => r.key === key);
+  let totalPages = todayPages;
+
+  if (prev.length > 0) {
+    const max = Math.max(...prev.map(p => p.totalPages));
+    totalPages = max + todayPages;
+  }
+
+  const record = {
+    key,
+    studentName,
+    className,
+    bookId,
+    todayPages,
+    totalPages,
+    date: new Date().toISOString()
+  };
+
+  db.records.push(record);
+  writeDB(db);
+
+  res.json({
+    ok: true,
+    record
+  });
+});
+
+// =========================
+// 📖 기록 삭제
+// =========================
+app.delete("/records", (req, res) => {
+  const db = readDB();
+  db.records = [];
+  writeDB(db);
 
   res.json({ ok: true });
 });
 
-/* ---------------- 서버 시작 ---------------- */
+// =========================
+// 📊 상태 체크
+// =========================
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    time: new Date().toISOString()
+  });
+});
+
+// =========================
+// 기본
+// =========================
+app.get("/", (req, res) => {
+  res.send("Reading Dashboard API Running");
+});
+
+// =========================
+// 서버 실행
+// =========================
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
