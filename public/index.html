@@ -291,7 +291,7 @@
 
     .table-card { margin-top: 2px; }
     .table-wrapper { width: 100%; overflow-x: auto; margin-top: 8px; }
-    table { width: 100%; border-collapse: collapse; font-size: clamp(11px, 0.6vw + 8px, 13px); min-width: 560px; }
+    table { width: 100%; border-collapse: collapse; font-size: clamp(11px, 0.6vw + 8px, 13px); min-width: 680px; }
     thead { background: #f3f4ff; }
     th, td {
       padding: 7px 9px; text-align: left; border-bottom: 1px solid #edf0f5;
@@ -639,7 +639,7 @@
             학생별 읽은 쪽수
             <span class="card-badge" style="background:#e0f2fe;color:#0369a1;">실시간</span>
           </div>
-          <div class="card-desc">브라우저 localStorage에 저장된 데이터를 기준으로 표시됩니다.</div>
+          <div class="card-desc">Railway DB에 저장된 데이터를 기준으로 표시됩니다.</div>
         </div>
 
         <div class="table-wrapper">
@@ -653,6 +653,7 @@
                 <th>누적 쪽수</th>
                 <th>진행률</th>
                 <th>상태</th>
+                <th>관리</th>
               </tr>
             </thead>
             <tbody id="record-table-body"></tbody>
@@ -660,8 +661,8 @@
         </div>
 
         <div class="table-footnote">
-          <span>※ 이 데이터는 이 컴퓨터/브라우저에만 저장됩니다.</span>
-          <span>Railway/구글 연동 후에도 통계 목적 외에는 사용하지 않습니다.</span>
+          <span>※ 이 데이터는 Railway PostgreSQL DB에 저장됩니다.</span>
+          <span>교사/관리자 계정만 수정·삭제할 수 있습니다.</span>
         </div>
       </section>
 
@@ -670,8 +671,8 @@
         <div class="privacy-title">개인정보 처리방침 (요약)</div>
         <ul class="privacy-list">
           <li>이 페이지는 학생의 이름(또는 번호), 반, 읽은 쪽수, 선택한 도서 정보를 사용합니다.</li>
-          <li>현재 버전에서는 이 정보가 브라우저 localStorage에만 저장되며, 서버로 전송되지 않습니다.</li>
-          <li>Railway/구글 연동 시에도, 수집 정보는 학급 단위 독서 통계 및 수업 피드백 제공 목적에 한해 사용됩니다.</li>
+          <li>입력된 정보는 Railway 서버의 데이터베이스에 저장됩니다.</li>
+          <li>수집 정보는 학급 단위 독서 통계 및 수업 피드백 제공 목적에 한해 사용됩니다.</li>
           <li>개별 학생의 개인정보를 광고·마케팅·외부 통계 서비스에 제공하지 않습니다.</li>
         </ul>
       </section>
@@ -701,7 +702,7 @@
         <p class="modal-section-title">3. 개인정보 보관 및 처리 방침</p>
         <ul>
           <li>입력된 정보는 브라우저 및 Railway 서버 내에서만 사용됩니다.</li>
-          <li>구글 로그인 연동 시, 구글 계정 정보는 학급 출석/식별 용도로만 사용하며 읽은 쪽수 통계와 별도로 집계·분석하지 않습니다.</li>
+          <li>구글 로그인 연동 시, 구글 계정 정보는 학급 출석/식별 용도로만 사용합니다.</li>
           <li>수집된 정보를 광고·마케팅·외부 통계 서비스에 제공하지 않습니다.</li>
         </ul>
 
@@ -712,7 +713,7 @@
 
         <p class="modal-section-title">5. 동의 철회 및 삭제</p>
         <ul>
-          <li>교사는 언제든지 브라우저 데이터 삭제 또는 관리자에게 요청하여 데이터를 삭제할 수 있습니다.</li>
+          <li>교사는 언제든지 관리자에게 요청하여 데이터를 삭제할 수 있습니다.</li>
         </ul>
 
         <hr />
@@ -753,11 +754,6 @@
 
     const gsiButtonContainer = document.getElementById("gsi-button-container");
 
-    // localStorage 키
-    const STORAGE_KEY_BOOKS = "readingDashboardBooks";
-    const STORAGE_KEY_RECORDS = "readingDashboardRecords";
-    const STORAGE_KEY_PROFILE = "readingDashboardProfile";
-
     // 폼 요소들
     const bookTitleInput = document.getElementById("book-title-input");
     const bookAuthorInput = document.getElementById("book-author-input");
@@ -787,10 +783,12 @@
     const shelf = document.getElementById("book-shelf");
     const shelfCountText = document.getElementById("shelf-count-text");
 
-    // 프로필(이름/동의/구글/역할) 관리
+    // 프로필은 여전히 localStorage (동의/표시용 + 현재 role 캐시)
+    const STORAGE_KEY_PROFILE = "readingDashboardProfile";
+
     function loadProfile() {
       const data = localStorage.getItem(STORAGE_KEY_PROFILE);
-      return data ? JSON.parse(data) : { name: "", consent: false, google: null, role: "student" };
+      return data ? JSON.parse(data) : { name: "", consent: false, google: null, role: "student", class_name: "" };
     }
     function saveProfile(profile) {
       localStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(profile));
@@ -799,6 +797,15 @@
       const profile = loadProfile();
       return profile.role || "student";
     }
+    function getCurrentEmail() {
+      const profile = loadProfile();
+      return profile.google?.email || "";
+    }
+    function getCurrentClassName() {
+      const profile = loadProfile();
+      return profile.class_name || "";
+    }
+
     function updateLoginStatusText() {
       const profile = loadProfile();
       const googleEmail = profile.google?.email;
@@ -857,6 +864,8 @@
         studentModeBtn.classList.remove("active");
         teacherOnlyEls.forEach(el => el.style.display = "block");
         studentOnlyEls.forEach(el => el.style.display = "none");
+        // 교사 모드로 들어올 때 DB에서 기록 새로 불러오기
+        loadAndRenderRecords().catch(console.error);
       } else {
         teacherModeBtn.classList.remove("active");
         studentModeBtn.classList.add("active");
@@ -868,71 +877,132 @@
     teacherModeBtn.addEventListener("click", () => setMode("teacher"));
     studentModeBtn.addEventListener("click", () => setMode("student"));
 
-    // 책/기록 관련
-    function loadBooks() {
-      const data = localStorage.getItem(STORAGE_KEY_BOOKS);
-      return data ? JSON.parse(data) : [];
-    }
-    function saveBooks(books) {
-      localStorage.setItem(STORAGE_KEY_BOOKS, JSON.stringify(books));
-    }
-    function loadRecords() {
-      const data = localStorage.getItem(STORAGE_KEY_RECORDS);
-      return data ? JSON.parse(data) : [];
-    }
-    function saveRecords(records) {
-      localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(records));
+    // --- DB 연동: 책/기록 ---
+
+    async function fetchWithUser(url, options = {}) {
+      const email = getCurrentEmail();
+      const headers = {
+        ...(options.headers || {}),
+        "Content-Type": options.body ? "application/json" : (options.headers || {})["Content-Type"] || undefined,
+        "x-user-email": email || ""
+      };
+      if (!headers["Content-Type"]) delete headers["Content-Type"];
+      const res = await fetch(url, { ...options, headers });
+      return res;
     }
 
-    function renderShelf() {
-      const books = loadBooks();
-      shelf.innerHTML = "";
-      shelfCountText.textContent = `등록된 도서 ${books.length}권`;
-      books.forEach(book => {
-        const div = document.createElement("div");
-        div.className = "book-chip";
-        div.innerHTML = `
-          <div class="book-chip-title">${book.title}</div>
-          <div class="book-chip-meta">${book.className} · ${book.pages}쪽${book.author ? " · " + book.author : ""}</div>
-        `;
-        shelf.appendChild(div);
+    async function loadBooksFromDb() {
+      const className = getCurrentClassName();
+      const query = className ? `?class_name=${encodeURIComponent(className)}` : "";
+      const res = await fetchWithUser(`/api/books${query}`);
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "도서 조회 실패");
+      return data.books;
+    }
+
+    async function addBookToDb({ class_name, title, author, pages }) {
+      const res = await fetchWithUser("/api/books", {
+        method: "POST",
+        body: JSON.stringify({ class_name, title, author, pages })
       });
-      if (books.length === 0) {
-        const placeholder = document.createElement("div");
-        placeholder.className = "book-chip";
-        placeholder.innerHTML = `
-          <div class="book-chip-title">도서를 등록해 보세요</div>
-          <div class="book-chip-meta">교사 모드에서 도서 등록 시 여기에 책이 나타납니다</div>
-        `;
-        shelf.appendChild(placeholder);
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "도서 등록 실패");
+      return data.book;
+    }
+
+    async function loadRecordsFromDb() {
+      const className = getCurrentClassName();
+      if (!className) return [];
+      const res = await fetchWithUser(`/api/records?class_name=${encodeURIComponent(className)}`);
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "기록 조회 실패");
+      return data.records;
+    }
+
+    async function saveRecordToDb(payload) {
+      const res = await fetchWithUser("/api/records", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "기록 저장 실패");
+      return data.record;
+    }
+
+    async function updateRecordInDb(id, patch) {
+      const res = await fetchWithUser(`/api/records/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(patch)
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "기록 수정 실패");
+      return data.record;
+    }
+
+    async function deleteRecordInDb(id) {
+      const res = await fetchWithUser(`/api/records/${id}`, {
+        method: "DELETE"
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "기록 삭제 실패");
+      return data.id;
+    }
+
+    // --- UI 렌더링 ---
+
+    async function refreshBookSelect() {
+      try {
+        const books = await loadBooksFromDb();
+        studentBookSelect.innerHTML = '<option value="">온책읽기 도서를 선택하세요</option>';
+        shelf.innerHTML = "";
+        shelfCountText.textContent = `등록된 도서 ${books.length}권`;
+
+        books.forEach(book => {
+          const option = document.createElement("option");
+          option.value = book.id;
+          option.textContent = `${book.title} (${book.class_name})`;
+          studentBookSelect.appendChild(option);
+
+          const div = document.createElement("div");
+          div.className = "book-chip";
+          div.innerHTML = `
+            <div class="book-chip-title">${book.title}</div>
+            <div class="book-chip-meta">${book.class_name} · ${book.pages}쪽${book.author ? " · " + book.author : ""}</div>
+          `;
+          shelf.appendChild(div);
+        });
+
+        if (books.length === 0) {
+          const placeholder = document.createElement("div");
+          placeholder.className = "book-chip";
+          placeholder.innerHTML = `
+            <div class="book-chip-title">도서를 등록해 보세요</div>
+            <div class="book-chip-meta">교사 모드에서 도서 등록 시 여기에 책이 나타납니다</div>
+          `;
+          shelf.appendChild(placeholder);
+          summaryBook.textContent = "미지정";
+          summaryBookDetail.textContent = "총 0쪽 · 목표 일수 0일";
+        } else {
+          const current = books[books.length - 1];
+          summaryBook.textContent = current.title;
+          summaryBookDetail.textContent = `총 ${current.pages}쪽 · ${current.class_name}`;
+        }
+      } catch (e) {
+        console.error(e);
       }
     }
 
-    function refreshBookSelect() {
-      const books = loadBooks();
-      studentBookSelect.innerHTML = '<option value="">온책읽기 도서를 선택하세요</option>';
-      books.forEach(book => {
-        const option = document.createElement("option");
-        option.value = book.id;
-        option.textContent = `${book.title} (${book.className})`;
-        studentBookSelect.appendChild(option);
-      });
-
-      if (books.length > 0) {
-        const current = books[books.length - 1];
-        summaryBook.textContent = current.title;
-        summaryBookDetail.textContent = `총 ${current.pages}쪽 · ${current.className}`;
-      } else {
-        summaryBook.textContent = "미지정";
-        summaryBookDetail.textContent = "총 0쪽 · 목표 일수 0일";
+    async function loadAndRenderRecords() {
+      try {
+        const records = await loadRecordsFromDb();
+        const books = await loadBooksFromDb();
+        renderRecords(records, books);
+      } catch (e) {
+        console.error(e);
       }
-
-      renderShelf();
     }
 
-    function renderRecords() {
-      const records = loadRecords();
-      const books = loadBooks();
+    function renderRecords(records, books) {
       recordTableBody.innerHTML = "";
 
       let totalToday = 0;
@@ -940,9 +1010,9 @@
       let doneCount = 0;
 
       records.forEach(rec => {
-        const book = books.find(b => b.id === rec.bookId);
-        const totalPages = book ? book.pages : 0;
-        const progress = totalPages ? Math.min(100, Math.round((rec.totalPages / totalPages) * 100)) : 0;
+        const book = books.find(b => b.id === rec.book_id);
+        const totalPagesBook = book ? book.pages : rec.book_pages || 0;
+        const progress = totalPagesBook ? Math.min(100, Math.round((rec.total_pages / totalPagesBook) * 100)) : 0;
         const status =
           progress >= 100
             ? "완독"
@@ -950,26 +1020,32 @@
               ? "거의 완독"
               : "읽는 중";
 
-        totalToday += rec.todayPages;
-        studentSet.add(rec.studentName + "|" + rec.className);
+        totalToday += rec.today_pages;
+        studentSet.add((rec.user_name || rec.studentname || "학생") + "|" + rec.class_name);
         if (progress >= 100) doneCount++;
 
         const tr = document.createElement("tr");
+        tr.dataset.recordId = rec.id;
+
         tr.innerHTML = `
-          <td>${rec.studentName}</td>
-          <td>${rec.className}</td>
-          <td><span class="tag tag-book">${book ? book.title : "알 수 없음"}</span></td>
-          <td>${rec.todayPages}쪽</td>
-          <td>${rec.totalPages}쪽</td>
+          <td>${rec.user_name || rec.studentname || "학생"}</td>
+          <td>${rec.class_name}</td>
+          <td><span class="tag tag-book">${book ? book.title : (rec.book_title || "알 수 없음")}</span></td>
+          <td>${rec.today_pages}쪽</td>
+          <td>${rec.total_pages}쪽</td>
           <td style="width:140px;">
             <div class="progress-bar-shell">
               <div class="progress-bar-fill" style="width:${progress}%;"></div>
             </div>
           </td>
           <td>
-            <span class="tag ${status === "완독" ? "tag-done" : status === "거의 완독" ? "tag-done" : "tag-progress"}">
+            <span class="tag ${status === "완독" || status === "거의 완독" ? "tag-done" : "tag-progress"}">
               ${status}
             </span>
+          </td>
+          <td>
+            <button class="btn btn-ghost btn-edit" type="button" style="padding:4px 8px;font-size:11px;">수정</button>
+            <button class="btn btn-ghost btn-delete" type="button" style="padding:4px 8px;font-size:11px;color:#dc2626;">삭제</button>
           </td>
         `;
         recordTableBody.appendChild(tr);
@@ -984,11 +1060,10 @@
 
       if (records.length > 0) {
         const lastRec = records[records.length - 1];
-        const booksData = loadBooks();
-        const currentBook = booksData.find(b => b.id === lastRec.bookId);
+        const currentBook = books.find(b => b.id === lastRec.book_id);
         if (currentBook) {
           const maxTotal = Math.max(
-            ...records.filter(r => r.bookId === currentBook.id).map(r => r.totalPages)
+            ...records.filter(r => r.book_id === currentBook.id).map(r => r.total_pages)
           );
           const progress = currentBook.pages ? Math.min(100, Math.round((maxTotal / currentBook.pages) * 100)) : 0;
           summaryBookProgress.textContent = `진행률 ${progress}%`;
@@ -1000,8 +1075,69 @@
       }
     }
 
-    // 도서 등록
-    bookAddBtn.addEventListener("click", () => {
+    // 교사용: 테이블 수정/삭제 이벤트 위임
+    recordTableBody.addEventListener("click", async (e) => {
+      const role = getCurrentRole();
+      if (!(role === "teacher" || role === "admin")) return;
+
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      const tr = btn.closest("tr");
+      const recordId = tr?.dataset.recordId;
+      if (!recordId) return;
+
+      if (btn.classList.contains("btn-delete")) {
+        if (!confirm("이 기록을 삭제할까요?")) return;
+        try {
+          await deleteRecordInDb(recordId);
+          await loadAndRenderRecords();
+        } catch (err) {
+          alert("삭제 중 오류가 발생했습니다: " + (err.message || ""));
+        }
+      }
+
+      if (btn.classList.contains("btn-edit")) {
+        const todayText = tr.children[3].textContent.replace("쪽", "").trim();
+        const totalText = tr.children[4].textContent.replace("쪽", "").trim();
+        const currentToday = parseInt(todayText, 10) || 0;
+        const currentTotal = parseInt(totalText, 10) || 0;
+
+        const newTodayStr = prompt("오늘 읽은 쪽수 수정", String(currentToday));
+        if (newTodayStr === null) return;
+        const newToday = parseInt(newTodayStr, 10);
+        if (Number.isNaN(newToday) || newToday < 0) {
+          alert("0 이상 숫자를 입력해주세요.");
+          return;
+        }
+
+        const newTotalStr = prompt("누적 쪽수 수정 (비워두면 기존 유지)", String(currentTotal));
+        let patch = { today_pages: newToday };
+        if (newTotalStr !== null && newTotalStr.trim() !== "") {
+          const newTotal = parseInt(newTotalStr, 10);
+          if (Number.isNaN(newTotal) || newTotal < newToday) {
+            alert("누적 쪽수는 오늘 쪽수 이상이어야 합니다.");
+            return;
+          }
+          patch.total_pages = newTotal;
+        }
+
+        try {
+          await updateRecordInDb(recordId, patch);
+          await loadAndRenderRecords();
+        } catch (err) {
+          alert("수정 중 오류가 발생했습니다: " + (err.message || ""));
+        }
+      }
+    });
+
+    // 도서 등록 (교사/관리자)
+    bookAddBtn.addEventListener("click", async () => {
+      const role = getCurrentRole();
+      if (!(role === "teacher" || role === "admin")) {
+        alert("교사/관리자만 도서를 등록할 수 있습니다.");
+        return;
+      }
+
       const className = classNameInput.value.trim();
       const title = bookTitleInput.value.trim();
       const author = bookAuthorInput.value.trim();
@@ -1011,22 +1147,18 @@
         alert("반, 도서 제목, 전체 쪽수를 모두 입력해주세요.");
         return;
       }
-      const books = loadBooks();
-      const newBook = {
-        id: "book_" + Date.now(),
-        className,
-        title,
-        author,
-        pages
-      };
-      books.push(newBook);
-      saveBooks(books);
-      refreshBookSelect();
-      summaryBook.textContent = title;
-      summaryBookDetail.textContent = `총 ${pages}쪽 · ${className}`;
-      bookTitleInput.value = "";
-      bookAuthorInput.value = "";
-      bookPagesInput.value = "";
+
+      try {
+        await addBookToDb({ class_name: className, title, author, pages });
+        await refreshBookSelect();
+        summaryBook.textContent = title;
+        summaryBookDetail.textContent = `총 ${pages}쪽 · ${className}`;
+        bookTitleInput.value = "";
+        bookAuthorInput.value = "";
+        bookPagesInput.value = "";
+      } catch (e) {
+        alert("도서 등록 중 오류가 발생했습니다: " + (e.message || ""));
+      }
     });
 
     bookResetBtn.addEventListener("click", () => {
@@ -1037,7 +1169,7 @@
     });
 
     // 학생 기록 저장
-    recordSaveBtn.addEventListener("click", () => {
+    recordSaveBtn.addEventListener("click", async () => {
       const profile = loadProfile();
       if (!profile.consent) {
         alert("개인정보 처리방침 동의 후 기록을 저장할 수 있습니다.\n상단의 '개인정보 처리방침 보기' 버튼을 눌러주세요.");
@@ -1060,32 +1192,20 @@
         return;
       }
 
-      const records = loadRecords();
-      const key = studentName + "|" + className + "|" + bookId;
-      const todayStr = new Date().toISOString().slice(0, 10);
-
-      let totalPages = todayPages;
-      const previous = records.filter(r => r.key === key);
-      if (previous.length > 0) {
-        const maxTotal = Math.max(...previous.map(p => p.totalPages));
-        totalPages = maxTotal + todayPages;
+      try {
+        await saveRecordToDb({
+          studentName,
+          className,
+          bookId: Number(bookId),
+          todayPages,
+          lastPage,
+          targetPages
+        });
+        todayPagesInput.value = "";
+        await loadAndRenderRecords();
+      } catch (e) {
+        alert("기록 저장 중 오류가 발생했습니다: " + (e.message || ""));
       }
-
-      const newRecord = {
-        key,
-        studentName,
-        className,
-        bookId,
-        todayPages,
-        totalPages,
-        lastPage,
-        targetPages,
-        date: todayStr
-      };
-      records.push(newRecord);
-      saveRecords(records);
-      renderRecords();
-      todayPagesInput.value = "";
     });
 
     recordResetBtn.addEventListener("click", () => {
@@ -1113,6 +1233,7 @@
             alert("Google 로그인 검증 실패: " + (data.error || ""));
             return;
           }
+
           const profile = loadProfile();
           profile.google = {
             email: data.user.email,
@@ -1120,13 +1241,28 @@
             picture: data.user.picture
           };
           profile.role = data.user.role || "student";
+          profile.class_name = data.user.class_name || profile.class_name || "";
           if (!profile.name && data.user.name) {
             profile.name = data.user.name;
           }
           saveProfile(profile);
           updateLoginStatusText();
+
           const role = profile.role;
           setMode(role === "teacher" || role === "admin" ? "teacher" : "student");
+
+          // 로그인 직후 동의 안 돼 있으면 모달 띄우기
+          if (!profile.consent) {
+            modalNameInput.value = profile.name || profile.google?.name || "";
+            modalConsentCheckbox.checked = false;
+            privacyModal.style.display = "flex";
+          }
+
+          // 로그인 후 책/기록 새로 불러오기
+          refreshBookSelect();
+          if (role === "teacher" || role === "admin") {
+            loadAndRenderRecords();
+          }
         })
         .catch(err => {
           console.error("auth/google error", err);
@@ -1148,12 +1284,15 @@
     }
 
     window.onload = () => {
-      refreshBookSelect();
-      renderRecords();
       updateLoginStatusText();
       const role = getCurrentRole();
       setMode(role === "teacher" || role === "admin" ? "teacher" : "student");
       initGsi();
+      // 로그인 상태라도 새로고침 시 책/기록 불러오기
+      refreshBookSelect();
+      if (role === "teacher" || role === "admin") {
+        loadAndRenderRecords();
+      }
     };
 
     googleLoginUiBtn.addEventListener("click", () => {
