@@ -1098,79 +1098,44 @@
     });
 
     // ===== Google Identity Services 초기화 =====
-    function handleGoogleResponse(response) {
-      const idToken = response.credential;
-      if (!idToken) return;
+function handleGoogleResponse(response) {
+  const idToken = response.credential;
+  if (!idToken) return;
 
-      fetch("/auth/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credential: idToken })
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (!data.ok) {
-            alert("Google 로그인 검증 실패: " + (data.error || ""));
-            return;
-          }
-          const profile = loadProfile();
-          profile.google = {
-            email: data.user.email,
-            name: data.user.name,
-            picture: data.user.picture
-          };
-          profile.role = data.user.role || "student";
-          if (!profile.name && data.user.name) {
-            profile.name = data.user.name;
-          }
-          saveProfile(profile);
-          updateLoginStatusText();
-          // 로그인 직후, 학생이면 학생 모드로 돌려두기
-          const role = profile.role;
-          setMode(role === "teacher" || role === "admin" ? "teacher" : "student");
-          alert(`Google 로그인 성공: ${data.user.name || data.user.email}\n역할: ${profile.role}`);
-        })
-        .catch(err => {
-          console.error("auth/google error", err);
-          alert("Google 로그인 중 오류가 발생했습니다.");
-        });
-    }
-
-    function initGsi() {
-      if (!window.google || !GOOGLE_CLIENT_ID) return;
-      window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleGoogleResponse
-      });
-      window.google.accounts.id.renderButton(gsiButtonContainer, {
-        type: "standard",
-        theme: "outline",
-        size: "large"
-      });
-    }
-
-    window.onload = () => {
-      refreshBookSelect();
-      renderRecords();
-      updateLoginStatusText();
-      // 로그인 안 했으면 기본은 학생 모드로 시작
-      const role = getCurrentRole();
-      setMode(role === "teacher" || role === "admin" ? "teacher" : "student");
-      initGsi();
-    };
-
-    googleLoginUiBtn.addEventListener("click", () => {
-      if (!window.google) {
-        alert("Google 스크립트가 아직 로드되지 않았습니다. 잠시 후 다시 시도해 주세요.");
+  fetch("/auth/google", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ credential: idToken })
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (!data.ok) {
+        alert("Google 로그인 검증 실패: " + (data.error || ""));
         return;
       }
-      const realButton = gsiButtonContainer.querySelector("div[role=button]");
-      if (realButton) {
-        realButton.click();
-      } else {
-        alert("Google 로그인 버튼 초기화에 실패했습니다.");
+
+      // ★ 여기에서 서버 응답의 role을 그대로 저장
+      const profile = loadProfile();
+      profile.google = {
+        email: data.user.email,
+        name: data.user.name,
+        picture: data.user.picture
+      };
+      profile.role = data.user.role || "student";  // <-- 꼭 있어야 함
+      if (!profile.name && data.user.name) {
+        profile.name = data.user.name;
       }
+      saveProfile(profile);
+      updateLoginStatusText();
+
+      const role = profile.role;
+      setMode(role === "teacher" || role === "admin" ? "teacher" : "student");
+    })
+    .catch(err => {
+      console.error("auth/google error", err);
+      alert("Google 로그인 중 오류가 발생했습니다.");
     });
+}
   </script>
 </body>
 </html>
