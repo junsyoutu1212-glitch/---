@@ -160,6 +160,33 @@ app.get("/auth/me", async (req, res) => {
   }
 });
 
+// ===== 교사용 반 설정/수정 API =====
+// 교사/관리자가 자신의 class_name을 설정/변경
+app.post("/teacher/set-class", requireRole(["teacher", "admin"]), async (req, res) => {
+  const { class_name } = req.body;
+  if (!class_name || !class_name.trim()) {
+    return res.status(400).json({ ok: false, error: "반 이름은 비어 있을 수 없습니다." });
+  }
+
+  try {
+    const user = req.user;
+    const { rows } = await pool.query(
+      `
+      UPDATE users
+      SET class_name = $2
+      WHERE id = $1
+      RETURNING id, email, name, picture, role, class_name
+      `,
+      [user.id, class_name.trim()]
+    );
+
+    res.json({ ok: true, user: rows[0] });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ ok: false, error: "서버 오류" });
+  }
+});
+
 // ===== 관리자: 역할 설정 =====
 app.post("/admin/set-role", async (req, res) => {
   const { email, role, class_name, secret } = req.body;
@@ -198,6 +225,10 @@ app.get("/api/books", requireRole(["teacher", "admin"]), async (req, res) => {
   try {
     const user = req.user;
     const className = user.class_name;
+    if (!className) {
+      return res.json({ ok: true, books: [] });
+    }
+
     const { rows } = await pool.query(
       "SELECT id, class_name, title, author, pages FROM books WHERE class_name = $1 ORDER BY id ASC",
       [className]
@@ -286,6 +317,10 @@ app.get("/api/records", requireRole(["teacher", "admin"]), async (req, res) => {
     const user = req.user;
     const className = user.class_name;
 
+    if (!className) {
+      return res.json({ ok: true, records: [] });
+    }
+
     const { rows } = await pool.query(
       `
       SELECT
@@ -309,6 +344,32 @@ app.get("/api/records", requireRole(["teacher", "admin"]), async (req, res) => {
     );
 
     res.json({ ok: true, records: rows });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ ok: false, error: "서버 오류" });
+  }
+});
+
+// 기록 삭제 (교사용)
+app.delete("/api/records/:id", requireRole(["teacher", "admin"]), async (req, res) => {
+  try {
+    const user = req.user;
+    const className = user.class_name;
+    const id = req.params.id;
+
+    const { rowCount } = await pool.query(
+      `
+      DELETE FROM records
+      WHERE id = $1 AND class_name = $2
+      `,
+      [id, className]
+    );
+
+    if (rowCount === 0) {
+      return res.status(404).json({ ok: false, error: "기록을 찾을 수 없습니다." });
+    }
+
+    res.json({ ok: true, id });
   } catch (e) {
     console.error(e);
     res.status(500).json({ ok: false, error: "서버 오류" });
