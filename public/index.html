@@ -1182,68 +1182,6 @@ function renderRecords(records, books) {
     });
   }
 }
-  // 요약 카드 갱신
-  summaryPages.textContent = totalToday;
-  const studentCount = studentSet.size;
-  summaryStudents.textContent = `참여 학생: ${studentCount}명`;
-  const avg = studentCount ? Math.round(totalToday / studentCount) : 0;
-  summaryAvg.textContent = avg;
-  summaryDone.textContent = `완독 학생: ${doneCount}명`;
-
-  if (records.length > 0) {
-    const lastRec = records[records.length - 1];
-    const currentBook = books.find(b => b.id === lastRec.book_id);
-    if (currentBook) {
-      const maxTotal = Math.max(
-        ...records.filter(r => r.book_id === currentBook.id).map(r => r.total_pages)
-      );
-      const progress = currentBook.pages ? Math.min(100, Math.round((maxTotal / currentBook.pages) * 100)) : 0;
-      summaryBookProgress.textContent = `진행률 ${progress}%`;
-    } else {
-      summaryBookProgress.textContent = "진행률 0%";
-    }
-  } else {
-    summaryBookProgress.textContent = "진행률 0%";
-  }
-
-  // --- 여기부터 랭킹 계산/렌더 ---
-  const bestByStudent = new Map();
-  records.forEach(rec => {
-    const key = rec.student_name + "|" + rec.class_name;
-    const prev = bestByStudent.get(key);
-    if (!prev || rec.total_pages > prev.total_pages) {
-      bestByStudent.set(key, rec);
-    }
-  });
-
-  const ranking = Array.from(bestByStudent.values())
-    .sort((a, b) => b.total_pages - a.total_pages)
-    .slice(0, 5); // 상위 5명
-
-  rankingBody.innerHTML = "";
-  if (ranking.length === 0) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td colspan="5" style="text-align:center;color:#9ca3af;font-size:12px;">
-        아직 랭킹을 계산할 기록이 없습니다.
-      </td>
-    `;
-    rankingBody.appendChild(tr);
-  } else {
-    ranking.forEach((rec, idx) => {
-      const book = books.find(b => b.id === rec.book_id);
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${idx + 1}</td>
-        <td>${rec.student_name}</td>
-        <td>${rec.class_name}</td>
-        <td>${book ? book.title : (rec.book_title || "알 수 없음")}</td>
-        <td>${rec.total_pages}쪽</td>
-      `;
-      rankingBody.appendChild(tr);
-    });
-  }
-}
 
       summaryPages.textContent = totalToday;
       const studentCount = studentSet.size;
