@@ -600,6 +600,32 @@
             </button>
           </div>
         </article>
+        <!-- 독서 랭킹 카드 (교사 전용) -->
+        <article class="card teacher-only">
+          <div class="card-header">
+            <div class="card-title">
+              독서 랭킹
+              <span class="card-badge" style="background:#fee2e2;color:#b91c1c;">Top 5</span>
+            </div>
+            <div class="card-desc">
+              누적 읽은 쪽수가 많은 순으로 학생을 보여줍니다.
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>순위</th>
+                  <th>학생</th>
+                  <th>반</th>
+                  <th>도서</th>
+                  <th>누적 쪽수</th>
+                </tr>
+              </thead>
+              <tbody id="ranking-body"></tbody>
+            </table>
+          </div>
+        </article>
       </section>
 
       <!-- 하단 표: 교사 모드 전용 -->
@@ -770,6 +796,7 @@
     const recordSaveBtn = document.getElementById("record-save-btn");
     const recordResetBtn = document.getElementById("record-reset-btn");
     const recordTableBody = document.getElementById("record-table-body");
+    const rankingBody = document.getElementById("ranking-body");
 
     const summaryPages = document.getElementById("summary-pages");
     const summaryAvg = document.getElementById("summary-avg");
@@ -1046,52 +1073,115 @@
     }
 
     function renderRecords(records, books) {
-      recordTableBody.innerHTML = "";
+  recordTableBody.innerHTML = "";
 
-      let totalToday = 0;
-      const studentSet = new Set();
-      let doneCount = 0;
+  let totalToday = 0;
+  const studentSet = new Set();
+  let doneCount = 0;
 
-      records.forEach(rec => {
-        const book = books.find(b => b.id === rec.book_id);
-        const totalPagesBook = book ? book.pages : rec.book_pages || 0;
-        const progress = totalPagesBook ? Math.min(100, Math.round((rec.total_pages / totalPagesBook) * 100)) : 0;
-        const status =
-          progress >= 100
-            ? "완독"
-            : progress >= 80
-              ? "거의 완독"
-              : "읽는 중";
+  records.forEach(rec => {
+    const book = books.find(b => b.id === rec.book_id);
+    const totalPagesBook = book ? book.pages : rec.book_pages || 0;
+    const progress = totalPagesBook ? Math.min(100, Math.round((rec.total_pages / totalPagesBook) * 100)) : 0;
+    const status =
+      progress >= 100
+        ? "완독"
+        : progress >= 80
+          ? "거의 완독"
+          : "읽는 중";
 
-        totalToday += rec.today_pages;
-        studentSet.add(rec.student_name + "|" + rec.class_name);
-        if (progress >= 100) doneCount++;
+    totalToday += rec.today_pages;
+    studentSet.add(rec.student_name + "|" + rec.class_name);
+    if (progress >= 100) doneCount++;
 
-        const tr = document.createElement("tr");
-        tr.dataset.recordId = rec.id;
+    const tr = document.createElement("tr");
+    tr.dataset.recordId = rec.id;
 
-        tr.innerHTML = `
-          <td>${rec.student_name}</td>
-          <td>${rec.class_name}</td>
-          <td><span class="tag tag-book">${book ? book.title : (rec.book_title || "알 수 없음")}</span></td>
-          <td>${rec.today_pages}쪽</td>
-          <td>${rec.total_pages}쪽</td>
-          <td style="width:140px;">
-            <div class="progress-bar-shell">
-              <div class="progress-bar-fill" style="width:${progress}%;"></div>
-            </div>
-          </td>
-          <td>
-            <span class="tag ${status === "완독" || status === "거의 완독" ? "tag-done" : "tag-progress"}">
-              ${status}
-            </span>
-          </td>
-          <td>
-            <button class="btn btn-ghost btn-delete" type="button" style="padding:4px 8px;font-size:11px;color:#dc2626;">삭제</button>
-          </td>
-        `;
-        recordTableBody.appendChild(tr);
-      });
+    tr.innerHTML = `
+      <td>${rec.student_name}</td>
+      <td>${rec.class_name}</td>
+      <td><span class="tag tag-book">${book ? book.title : (rec.book_title || "알 수 없음")}</span></td>
+      <td>${rec.today_pages}쪽</td>
+      <td>${rec.total_pages}쪽</td>
+      <td style="width:140px;">
+        <div class="progress-bar-shell">
+          <div class="progress-bar-fill" style="width:${progress}%;"></div>
+        </div>
+      </td>
+      <td>
+        <span class="tag ${status === "완독" || status === "거의 완독" ? "tag-done" : "tag-progress"}">
+          ${status}
+        </span>
+      </td>
+      <td>
+        <button class="btn btn-ghost btn-delete" type="button" style="padding:4px 8px;font-size:11px;color:#dc2626;">삭제</button>
+      </td>
+    `;
+    recordTableBody.appendChild(tr);
+  });
+
+  // 요약 카드 갱신
+  summaryPages.textContent = totalToday;
+  const studentCount = studentSet.size;
+  summaryStudents.textContent = `참여 학생: ${studentCount}명`;
+  const avg = studentCount ? Math.round(totalToday / studentCount) : 0;
+  summaryAvg.textContent = avg;
+  summaryDone.textContent = `완독 학생: ${doneCount}명`;
+
+  if (records.length > 0) {
+    const lastRec = records[records.length - 1];
+    const currentBook = books.find(b => b.id === lastRec.book_id);
+    if (currentBook) {
+      const maxTotal = Math.max(
+        ...records.filter(r => r.book_id === currentBook.id).map(r => r.total_pages)
+      );
+      const progress = currentBook.pages ? Math.min(100, Math.round((maxTotal / currentBook.pages) * 100)) : 0;
+      summaryBookProgress.textContent = `진행률 ${progress}%`;
+    } else {
+      summaryBookProgress.textContent = "진행률 0%";
+    }
+  } else {
+    summaryBookProgress.textContent = "진행률 0%";
+  }
+
+  // --- 여기부터 랭킹 계산/렌더 ---
+  const bestByStudent = new Map();
+  records.forEach(rec => {
+    const key = rec.student_name + "|" + rec.class_name;
+    const prev = bestByStudent.get(key);
+    if (!prev || rec.total_pages > prev.total_pages) {
+      bestByStudent.set(key, rec);
+    }
+  });
+
+  const ranking = Array.from(bestByStudent.values())
+    .sort((a, b) => b.total_pages - a.total_pages)
+    .slice(0, 5); // 상위 5명
+
+  rankingBody.innerHTML = "";
+  if (ranking.length === 0) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td colspan="5" style="text-align:center;color:#9ca3af;font-size:12px;">
+        아직 랭킹을 계산할 기록이 없습니다.
+      </td>
+    `;
+    rankingBody.appendChild(tr);
+  } else {
+    ranking.forEach((rec, idx) => {
+      const book = books.find(b => b.id === rec.book_id);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${idx + 1}</td>
+        <td>${rec.student_name}</td>
+        <td>${rec.class_name}</td>
+        <td>${book ? book.title : (rec.book_title || "알 수 없음")}</td>
+        <td>${rec.total_pages}쪽</td>
+      `;
+      rankingBody.appendChild(tr);
+    });
+  }
+}
 
       summaryPages.textContent = totalToday;
       const studentCount = studentSet.size;
