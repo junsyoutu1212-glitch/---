@@ -12,15 +12,13 @@ const port = process.env.PORT || 3000;
 // ===== PostgreSQL 연결 =====
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // Railway, Render 등에서 SSL 필요 시:
   ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false
 });
 
-// ===== Google OAuth 설정 (리디렉션 방식) =====
+// ===== Google OAuth 설정 (리디렉션) =====
 const OAUTH_CLIENT_ID = process.env.GOOGLE_OAUTH_CLIENT_ID;
 const OAUTH_CLIENT_SECRET = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
-const OAUTH_REDIRECT_URI = process.env.GOOGLE_OAUTH_REDIRECT_URI; 
-// 예: https://your-domain.com/auth/google/callback
+const OAUTH_REDIRECT_URI = process.env.GOOGLE_OAUTH_REDIRECT_URI;
 
 const oauthClient = new OAuth2Client(
   OAUTH_CLIENT_ID,
@@ -31,24 +29,32 @@ const oauthClient = new OAuth2Client(
 // ===== 미들웨어 =====
 app.use(express.json());
 app.use(cookieParser());
-
-// 정적 파일 서빙 (index.html 포함)
 app.use(express.static(path.join(__dirname, "public")));
 
-// ===== 간단 세션용 쿠키 처리 =====
-// 쿠키에 userId만 넣고, 실제 정보는 DB에서 조회
+// ===== 유저 조회 (쿠키 + x-user-email 둘 다 허용) =====
 async function getUserFromRequest(req) {
   const userId = req.cookies["user_id"];
-  if (!userId) return null;
+  const headerEmail = req.headers["x-user-email"];
 
-  const { rows } = await pool.query(
-    "SELECT id, email, name, picture, role, class_name FROM users WHERE id = $1",
-    [userId]
-  );
-  return rows[0] || null;
+  if (userId) {
+    const { rows } = await pool.query(
+      "SELECT id, email, name, picture, role, class_name FROM users WHERE id = $1",
+      [userId]
+    );
+    if (rows[0]) return rows[0];
+  }
+
+  if (headerEmail) {
+    const { rows } = await pool.query(
+      "SELECT id, email, name, picture, role, class_name FROM users WHERE email = $1",
+      [headerEmail]
+    );
+    if (rows[0]) return rows[0];
+  }
+
+  return null;
 }
 
-// role 체크 미들웨어
 function requireRole(roles) {
   return async (req, res, next) => {
     try {
@@ -68,7 +74,7 @@ function requireRole(roles) {
   };
 }
 
-// ===== Google OAuth: 로그인 시작 (리디렉션) =====
+// ===== Google OAuth: 로그인 시작 =====
 app.get("/auth/google/login", (req, res) => {
   const params = new URLSearchParams({
     client_id: OAUTH_CLIENT_ID,
@@ -89,7 +95,6 @@ app.get("/auth/google/callback", async (req, res) => {
   if (!code) return res.status(400).send("code 없음");
 
   try {
-    // 1) code -> tokens
     const { tokens } = await oauthClient.getToken({
       code,
       redirect_uri: OAUTH_REDIRECT_URI
@@ -98,7 +103,6 @@ app.get("/auth/google/callback", async (req, res) => {
     const idToken = tokens.id_token;
     if (!idToken) throw new Error("id_token 없음");
 
-    // 2) id_token 검증 (이메일, 이름 등 추출)
     const ticket = await oauthClient.verifyIdToken({
       idToken,
       audience: OAUTH_CLIENT_ID
@@ -112,7 +116,6 @@ app.get("/auth/google/callback", async (req, res) => {
       return res.status(400).send("이메일 정보 없음");
     }
 
-    // 3) users 테이블 upsert
     const { rows } = await pool.query(
       `
       INSERT INTO users (email, name, picture, role, class_name)
@@ -127,14 +130,12 @@ app.get("/auth/google/callback", async (req, res) => {
 
     const user = rows[0];
 
-    // 4) user_id 쿠키에 저장
     res.cookie("user_id", user.id, {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production"
     });
 
-    // 5) 메인 페이지로 리디렉션
     res.redirect("/");
   } catch (e) {
     console.error("Google OAuth 에러:", e);
@@ -142,19 +143,16 @@ app.get("/auth/google/callback", async (req, res) => {
   }
 });
 
-// ===== 로그아웃 =====
+// ===== 인증 관련 API =====
 app.post("/auth/logout", (req, res) => {
   res.clearCookie("user_id");
   res.json({ ok: true });
 });
 
-// ===== 현재 로그인 사용자 정보 =====
 app.get("/auth/me", async (req, res) => {
   try {
     const user = await getUserFromRequest(req);
-    if (!user) {
-      return res.json({ ok: false, user: null });
-    }
+    if (!user) return res.json({ ok: false, user: null });
     res.json({ ok: true, user });
   } catch (e) {
     console.error(e);
@@ -162,7 +160,7 @@ app.get("/auth/me", async (req, res) => {
   }
 });
 
-// ===== 관리자: 역할 설정 (예: 교사로 바꾸기) =====
+// ===== 관리자: 역할 설정 =====
 app.post("/admin/set-role", async (req, res) => {
   const { email, role, class_name, secret } = req.body;
 
@@ -195,19 +193,15 @@ app.post("/admin/set-role", async (req, res) => {
   }
 });
 
-// ===== 도서 API (교사 전용) =====
-
-// 도서 목록 조회 (해당 교사/학급 기준)
+// ===== 도서 API =====
 app.get("/api/books", requireRole(["teacher", "admin"]), async (req, res) => {
   try {
     const user = req.user;
     const className = user.class_name;
-
     const { rows } = await pool.query(
       "SELECT id, class_name, title, author, pages FROM books WHERE class_name = $1 ORDER BY id ASC",
       [className]
     );
-
     res.json({ ok: true, books: rows });
   } catch (e) {
     console.error(e);
@@ -215,11 +209,9 @@ app.get("/api/books", requireRole(["teacher", "admin"]), async (req, res) => {
   }
 });
 
-// 도서 추가 (교사 전용)
 app.post("/api/books", requireRole(["teacher", "admin"]), async (req, res) => {
-  const { className, title, author, pages } = req.body;
-
-  if (!className || !title || !pages) {
+  const { class_name, title, author, pages } = req.body;
+  if (!class_name || !title || !pages) {
     return res.status(400).json({ ok: false, error: "반, 제목, 전체 쪽수는 필수" });
   }
 
@@ -230,9 +222,8 @@ app.post("/api/books", requireRole(["teacher", "admin"]), async (req, res) => {
       VALUES ($1, $2, $3, $4)
       RETURNING id, class_name, title, author, pages
       `,
-      [className, title, author || "", pages]
+      [class_name, title, author || "", pages]
     );
-
     res.json({ ok: true, book: rows[0] });
   } catch (e) {
     console.error(e);
@@ -240,9 +231,7 @@ app.post("/api/books", requireRole(["teacher", "admin"]), async (req, res) => {
   }
 });
 
-// ===== 학생 기록 API =====
-
-// 학생 기록 추가 (학생/교사/관리자)
+// ===== 기록 API =====
 app.post("/api/records", requireRole(["student", "teacher", "admin"]), async (req, res) => {
   const { studentName, className, bookId, todayPages, lastPage, targetPages } = req.body;
 
@@ -253,7 +242,6 @@ app.post("/api/records", requireRole(["student", "teacher", "admin"]), async (re
   try {
     const todayStr = new Date().toISOString().slice(0, 10);
 
-    // 기존 누적값 조회
     const prev = await pool.query(
       `
       SELECT MAX(total_pages) AS max_total
@@ -293,7 +281,6 @@ app.post("/api/records", requireRole(["student", "teacher", "admin"]), async (re
   }
 });
 
-// 기록 목록 조회 (교사/관리자만, 해당 학급)
 app.get("/api/records", requireRole(["teacher", "admin"]), async (req, res) => {
   try {
     const user = req.user;
