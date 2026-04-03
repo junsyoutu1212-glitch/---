@@ -440,8 +440,15 @@
         <div class="login-info-desc">
           이 서비스는 학생의 이름(또는 번호)·반·읽은 쪽수만 사용합니다.
         </div>
+        <div style="margin-top:4px;font-size:12px;color:var(--text-sub);" id="class-info-text">
+          현재 반: (미설정)
+        </div>
       </div>
       <div class="login-right">
+        <button type="button" class="google-btn" id="teacher-class-btn">
+          <span class="google-btn-icon"></span>
+          <span>반 설정·수정</span>
+        </button>
         <button type="button" class="google-btn" id="google-login-ui-btn">
           <span class="google-btn-icon"></span>
           <span>구글 계정으로 로그인</span>
@@ -614,7 +621,7 @@
             </div>
           </div>
           <p style="font-size:clamp(10px,0.5vw+7px,12px); color:var(--text-sub); margin:0;">
-            교실 TV나 빔에 띄워 두고, 학생에게 “학생 모드”에서 자신의 이름·반·도서·쪽수만 입력하게 하면 됩니다.
+            교실 TV에 띄워 두고, 학생에게 “학생 모드”에서 자신의 이름·반·도서·쪽수만 입력하게 하면 됩니다.
           </p>
         </article>
       </section>
@@ -626,7 +633,7 @@
             학생별 읽은 쪽수
             <span class="card-badge" style="background:#e0f2fe;color:#0369a1;">실시간</span>
           </div>
-          <div class="card-desc">Railway DB에 저장된 데이터를 기준으로 표시됩니다.</div>
+          <div class="card-desc">데이터베이스에 저장된 데이터를 기준으로 표시됩니다.</div>
         </div>
 
         <div class="table-wrapper">
@@ -648,7 +655,7 @@
         </div>
 
         <div class="table-footnote">
-          <span>※ 이 데이터는 Railway PostgreSQL DB에 저장됩니다.</span>
+          <span>※ 이 데이터는 데이터베이스 서버에 저장됩니다.</span>
           <span>교사/관리자 계정만 수정·삭제할 수 있습니다.</span>
         </div>
       </section>
@@ -658,7 +665,7 @@
         <div class="privacy-title">개인정보 처리방침 (요약)</div>
         <ul class="privacy-list">
           <li>이 페이지는 학생의 이름(또는 번호), 반, 읽은 쪽수, 선택한 도서 정보를 사용합니다.</li>
-          <li>입력된 정보는 Railway 서버의 데이터베이스에 저장됩니다.</li>
+          <li>입력된 정보는 데이터베이스 서버에 저장됩니다.</li>
           <li>수집 정보는 학급 단위 독서 통계 및 수업 피드백 제공 목적에 한해 사용됩니다.</li>
           <li>개별 학생의 개인정보를 광고·마케팅·외부 통계 서비스에 제공하지 않습니다.</li>
         </ul>
@@ -688,7 +695,7 @@
 
         <p class="modal-section-title">3. 개인정보 보관 및 처리 방침</p>
         <ul>
-          <li>입력된 정보는 브라우저 및 Railway 서버 내에서만 사용됩니다.</li>
+          <li>입력된 정보는 브라우저 및 데이터베이스 서버 내에서만 사용됩니다.</li>
           <li>구글 로그인 연동 시, 구글 계정 정보는 학급 출석/식별 용도로만 사용합니다.</li>
           <li>수집된 정보를 광고·마케팅·외부 통계 서비스에 제공하지 않습니다.</li>
         </ul>
@@ -721,6 +728,30 @@
     </div>
   </div>
 
+  <!-- 교사용 반 설정 모달 -->
+  <div class="modal-backdrop" id="class-modal" style="display:none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">교사 반 설정</div>
+        <button type="button" class="modal-close-btn" id="class-close-btn">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-section-title">우리 반 이름/번호를 입력하세요</p>
+        <p style="font-size:12px;color:var(--text-sub);margin-top:0;">
+          예: 4-2, 3-1, 6학년1반 등. 이 반 이름으로 도서/기록이 묶여서 저장됩니다.
+        </p>
+        <div class="modal-input-group">
+          <label>반 이름</label>
+          <input type="text" id="class-modal-input" placeholder="예: 4-2" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" id="class-cancel-btn">취소</button>
+        <button type="button" class="btn btn-primary" id="class-save-btn">저장</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // 모드 전환 버튼
     const teacherModeBtn = document.getElementById("teacher-mode-btn");
@@ -730,12 +761,21 @@
     const loginStatusText = document.getElementById("login-status-text");
     const googleLoginUiBtn = document.getElementById("google-login-ui-btn");
     const openPrivacyModalBtn = document.getElementById("open-privacy-modal-btn");
+    const teacherClassBtn = document.getElementById("teacher-class-btn");
+    const classInfoText = document.getElementById("class-info-text");
+
     const privacyModal = document.getElementById("privacy-modal");
     const privacyCloseBtn = document.getElementById("privacy-close-btn");
     const privacyCancelBtn = document.getElementById("privacy-cancel-btn");
     const privacyAcceptBtn = document.getElementById("privacy-accept-btn");
     const modalNameInput = document.getElementById("modal-name-input");
     const modalConsentCheckbox = document.getElementById("modal-consent-checkbox");
+
+    const classModal = document.getElementById("class-modal");
+    const classCloseBtn = document.getElementById("class-close-btn");
+    const classCancelBtn = document.getElementById("class-cancel-btn");
+    const classSaveBtn = document.getElementById("class-save-btn");
+    const classModalInput = document.getElementById("class-modal-input");
 
     // 폼 요소들
     const bookTitleInput = document.getElementById("book-title-input");
@@ -802,9 +842,14 @@
       } else {
         loginStatusText.textContent = "로그인 안 됨 · 미동의";
       }
+
+      const className = profile.class_name;
+      classInfoText.textContent = className
+        ? `현재 반: ${className}`
+        : "현재 반: (미설정 - 상단 '반 설정·수정' 버튼으로 설정하세요)";
     }
 
-    // 모달 열기/닫기
+    // 개인정보 모달 열기/닫기
     openPrivacyModalBtn.addEventListener("click", () => {
       const profile = loadProfile();
       modalNameInput.value = profile.name || profile.google?.name || "";
@@ -827,6 +872,59 @@
       saveProfile(profile);
       updateLoginStatusText();
       closePrivacyModal();
+    });
+
+    // 반 설정 모달 열기/닫기
+    teacherClassBtn.addEventListener("click", () => {
+      const profile = loadProfile();
+      classModalInput.value = profile.class_name || "";
+      classModal.style.display = "flex";
+    });
+    function closeClassModal() { classModal.style.display = "none"; }
+    classCloseBtn.addEventListener("click", closeClassModal);
+    classCancelBtn.addEventListener("click", closeClassModal);
+
+    classSaveBtn.addEventListener("click", async () => {
+      const newClass = classModalInput.value.trim();
+      if (!newClass) {
+        alert("반 이름을 입력해주세요.");
+        return;
+      }
+      try {
+        const res = await fetch("/teacher/set-class", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ class_name: newClass })
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          alert("반 설정 중 오류: " + (data.error || ""));
+          return;
+        }
+        // users 테이블 업데이트 결과를 프로필에도 반영
+        const profile = loadProfile();
+        profile.class_name = data.user.class_name;
+        if (data.user.role) profile.role = data.user.role;
+        if (data.user.name && !profile.name) profile.name = data.user.name;
+        profile.google = profile.google || {
+          email: data.user.email,
+          name: data.user.name,
+          picture: data.user.picture
+        };
+        saveProfile(profile);
+        updateLoginStatusText();
+        closeClassModal();
+        // 반이 바뀌면 책/기록 다시 로드
+        await refreshBookSelect();
+        if (getCurrentRole() === "teacher" || getCurrentRole() === "admin") {
+          await loadAndRenderRecords();
+        }
+      } catch (e) {
+        console.error(e);
+        alert("반 설정 중 서버 오류가 발생했습니다.");
+      }
     });
 
     // 모드 전환
@@ -1068,7 +1166,7 @@
     // 도서 등록 버튼
     bookAddBtn.addEventListener("click", async () => {
       try {
-        const className = classNameInput.value.trim();
+        const className = classNameInput.value.trim() || getCurrentClassName();
         const title = bookTitleInput.value.trim();
         const author = bookAuthorInput.value.trim();
         const pages = parseInt(bookPagesInput.value, 10);
