@@ -35,14 +35,7 @@
       margin-bottom: 12px; gap: 12px;
     }
     .brand { display: flex; align-items: center; gap: 10px; }
-    .brand-logo {
-      width: 40px; height: 40px; border-radius: 14px;
-      background: conic-gradient(from 160deg, #4b6bfb, #22c55e, #f97316, #4b6bfb);
-      box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4);
-      display: flex; align-items: center; justify-content: center;
-      color: white; font-weight: 800;
-      font-size: clamp(16px, 1.3vw + 10px, 20px);
-    }
+    
     .brand-text-main {
       font-size: clamp(18px, 1.4vw + 12px, 22px);
       font-weight: 700; letter-spacing: -0.03em;
@@ -421,7 +414,6 @@
   <div class="app-shell">
     <header>
       <div class="brand">
-        <div class="brand-logo">북</div>
         <div>
           <div class="brand-text-main">온책읽기 독서 대시보드</div>
           <div class="brand-text-sub">학급 한 권 읽기 · 쪽수 기반 독서 기록</div>
@@ -1187,6 +1179,46 @@
         alert("도서 등록 중 오류: " + (err.message || ""));
       }
     });
+
+    async function SetRole(email, secret, role, className) {
+  try {
+    const res = await fetch("/admin/set-role", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        role,               // "student" | "teacher" | "admin"
+        class_name: className || null,
+        secret              // ADMIN_SECRET 값
+      })
+    });
+    const data = await res.json();
+    console.log("SetRole result:", data);
+
+    if (!data.ok) {
+      alert("SetRole 오류: " + (data.error || "알 수 없는 오류"));
+      return;
+    }
+
+    // 로컬 프로필도 같이 업데이트
+    const profile = loadProfile();
+    profile.role = data.user.role;
+    profile.class_name = data.user.class_name || "";
+    if (!profile.google) {
+      profile.google = {
+        email: data.user.email,
+        name: data.user.name,
+        picture: data.user.picture
+      };
+    }
+    saveProfile(profile);
+    updateLoginStatusText();
+    alert(`역할이 ${data.user.role} / 반이 ${data.user.class_name || "(없음)"} 로 변경되었습니다.`);
+  } catch (e) {
+    console.error(e);
+    alert("SetRole 호출 중 서버 오류");
+  }
+}
 
     bookResetBtn.addEventListener("click", () => {
       classNameInput.value = "";
