@@ -1182,31 +1182,7 @@ function renderRecords(records, books) {
     });
   }
 }
-
-      summaryPages.textContent = totalToday;
-      const studentCount = studentSet.size;
-      summaryStudents.textContent = `참여 학생: ${studentCount}명`;
-      const avg = studentCount ? Math.round(totalToday / studentCount) : 0;
-      summaryAvg.textContent = avg;
-      summaryDone.textContent = `완독 학생: ${doneCount}명`;
-
-      if (records.length > 0) {
-        const lastRec = records[records.length - 1];
-        const currentBook = books.find(b => b.id === lastRec.book_id);
-        if (currentBook) {
-          const maxTotal = Math.max(
-            ...records.filter(r => r.book_id === currentBook.id).map(r => r.total_pages)
-          );
-          const progress = currentBook.pages ? Math.min(100, Math.round((maxTotal / currentBook.pages) * 100)) : 0;
-          summaryBookProgress.textContent = `진행률 ${progress}%`;
-        } else {
-          summaryBookProgress.textContent = "진행률 0%";
-        }
-      } else {
-        summaryBookProgress.textContent = "진행률 0%";
-      }
-    }
-
+    
     // 교사용: 삭제 버튼
     recordTableBody.addEventListener("click", async (e) => {
       const role = getCurrentRole();
