@@ -1,1506 +1,1516 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <title>Reading Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <style>
-    :root {
-      --bg: #f5f7fb;
-      --card-bg: #ffffff;
-      --primary: #4b6bfb;
-      --primary-soft: #e4ebff;
-      --accent: #ffb020;
-      --text-main: #111827;
-      --text-sub: #6b7280;
-      --border: #e5e7eb;
-      --radius-lg: 18px;
-      --shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.08);
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: Pretendard, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-size: 14px;
-      background: radial-gradient(circle at top left, #eef2ff, #f9fafb 55%);
-      color: var(--text-main);
-    }
-    .app-shell {
-      max-width: 1120px;
-      margin: 24px auto 40px;
-      padding: 0 16px;
-    }
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-      gap: 12px;
-    }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .brand-logo {
-      width: 40px;
-      height: 40px;
-      border-radius: 14px;
-      background: conic-gradient(from 160deg, #4b6bfb, #22c55e, #f97316, #4b6bfb);
-      box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 800;
-      font-size: 18px;
-    }
-    .brand-text-main {
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: -0.03em;
-    }
-    .brand-text-sub {
-      font-size: 11px;
-      color: var(--text-sub);
-    }
-    .role-toggle {
-      display: inline-flex;
-      padding: 4px;
-      border-radius: 999px;
-      background: #e5e7eb;
-      gap: 4px;
-    }
-    .role-toggle button {
-      border: none;
-      border-radius: 999px;
-      padding: 6px 14px;
-      font-size: 11px;
-      cursor: pointer;
-      background: transparent;
-      color: var(--text-sub);
-      transition: all 0.18s ease;
-    }
-    .role-toggle button.active {
-      background: #ffffff;
-      color: var(--text-main);
-      font-weight: 600;
-      box-shadow: 0 6px 16px rgba(148, 163, 184, 0.45);
-    }
-    .login-card, .card, .summary-card, .privacy-card {
-      background: var(--card-bg);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-soft);
-    }
-    main {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .login-card {
-      padding: 10px 16px;
-      margin-bottom: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .login-info-title {
-      font-size: 13px;
-      font-weight: 600;
-    }
-    .login-info-desc {
-      font-size: 11px;
-      color: var(--text-sub);
-    }
-    .login-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .login-name-display {
-      font-size: 11px;
-      color: var(--text-sub);
-    }
-    .google-btn {
-      border-radius: 999px;
-      border: 1px solid #d1d5db;
-      background: #ffffff;
-      padding: 6px 12px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-      font-size: 11px;
-      box-shadow: 0 3px 6px rgba(15, 23, 42, 0.08);
-    }
-    .google-btn-icon {
-      width: 16px;
-      height: 16px;
-      border-radius: 3px;
-      background: conic-gradient(from 45deg,#4285F4,#34A853,#FBBC05,#EA4335,#4285F4);
-    }
-    .admin-btn {
-      border-radius: 999px;
-      border: 1px solid #fecaca;
-      background: #fee2e2;
-      color: #b91c1c;
-      font-size: 11px;
-      padding: 6px 10px;
-      cursor: pointer;
-      display: none;
-    }
+    <meta charset="utf-8" />
+    <title>Reading Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-    }
-    .summary-card {
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .summary-label {
-      font-size: 11px;
-      color: var(--text-sub);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .summary-pill {
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: var(--primary-soft);
-      color: var(--primary);
-      font-size: 10px;
-      font-weight: 600;
-    }
-    .summary-main {
-      display: flex;
-      align-items: baseline;
-      gap: 6px;
-    }
-    .summary-value {
-      font-size: 20px;
-      font-weight: 700;
-    }
-    .summary-unit {
-      font-size: 11px;
-      color: var(--text-sub);
-    }
-    .summary-foot {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 11px;
-      color: var(--text-sub);
-    }
+    <style>
+        :root {
+            --bg: #f5f7fb;
+            --card-bg: #ffffff;
+            --primary: #4b6bfb;
+            --primary-soft: #e4ebff;
+            --accent: #ffb020;
+            --text-main: #111827;
+            --text-sub: #6b7280;
+            --border: #e5e7eb;
+            --radius-lg: 18px;
+            --shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.08);
+        }
 
-    .content-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-      gap: 16px;
-      align-items: flex-start;
-    }
-    .card {
-      padding: 16px 16px 14px;
-    }
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-      gap: 10px;
-    }
-    .card-title {
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .card-badge {
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: #eef2ff;
-      color: #4b6bfb;
-      font-weight: 500;
-    }
-    .card-desc {
-      font-size: 11px;
-      color: var(--text-sub);
-    }
+        * {
+            box-sizing: border-box;
+        }
 
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px 12px;
-      font-size: 12px;
-    }
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      font-size: 12px;
-    }
-    label {
-      font-size: 12px;
-    }
-    label span.req {
-      color: #ef4444;
-      margin-left: 4px;
-    }
-    input[type="text"],
-    input[type="number"],
-    select {
-      border-radius: 9px;
-      border: 1px solid var(--border);
-      padding: 7px 9px;
-      font-size: 12px;
-      outline: none;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
-      background: #f9fafb;
-    }
-    input[type="text"]:focus,
-    input[type="number"]:focus,
-    select:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.2);
-      background: #ffffff;
-    }
-    .btn-row {
-      margin-top: 10px;
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      font-size: 12px;
-    }
-    .btn {
-      border-radius: 999px;
-      border: none;
-      padding: 7px 16px;
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
-      white-space: nowrap;
-    }
-    .btn-ghost {
-      background: transparent;
-      color: var(--text-sub);
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, #4b6bfb, #6366f1);
-      color: #ffffff;
-      box-shadow: 0 10px 22px rgba(79, 70, 229, 0.55);
-    }
-    .btn-primary span.dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.7);
-    }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Pretendard, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-size: clamp(13px, 0.85vw + 10px, 16px);
+            background: radial-gradient(circle at top left, #eef2ff, #f9fafb 55%);
+            color: var(--text-main);
+        }
 
-    .shelf-card {
-      background: var(--card-bg);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-soft);
-      padding: 12px 16px 10px;
-      margin-bottom: 6px;
-    }
-    .shelf-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-      gap: 10px;
-    }
-    .shelf-title {
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-    }
-    .shelf-sub {
-      font-size: 11px;
-      color: var(--text-sub);
-    }
-    .shelf-strip {
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-    }
-    .book-chip {
-      min-width: 120px;
-      max-width: 160px;
-      flex: 0 0 auto;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #eef2ff, #e0ecff);
-      padding: 8px 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      font-size: 11px;
-    }
-    .book-chip-title {
-      font-weight: 600;
-      line-height: 1.2;
-    }
-    .book-chip-meta {
-      font-size: 10px;
-      color: var(--text-sub);
-    }
+        .app-shell {
+            max-width: 1120px;
+            margin: 24px auto 40px;
+            padding: 0 16px;
+        }
 
-    .table-card {
-      margin-top: 2px;
-    }
-    .table-wrapper {
-      width: 100%;
-      overflow-x: auto;
-      margin-top: 8px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-      min-width: 680px;
-    }
-    thead {
-      background: #f3f4ff;
-    }
-    th, td {
-      padding: 7px 9px;
-      text-align: left;
-      border-bottom: 1px solid #edf0f5;
-    }
-    th {
-      font-weight: 600;
-      color: #4b5563;
-      font-size: 11px;
-    }
-    tbody tr:nth-child(even) {
-      background: #f9fafb;
-    }
-    .tag {
-      display: inline-flex;
-      align-items: center;
-      padding: 2px 7px;
-      border-radius: 999px;
-      font-size: 10px;
-      gap: 4px;
-    }
-    .tag-book {
-      background: #eef2ff;
-      color: #4b6bfb;
-    }
-    .tag-done {
-      background: #ecfdf3;
-      color: #15803d;
-    }
-    .tag-progress {
-      background: #fef3c7;
-      color: #b45309;
-    }
-    .progress-bar-shell {
-      width: 100%;
-      height: 6px;
-      border-radius: 999px;
-      background: #e5e7eb;
-      overflow: hidden;
-    }
-    .progress-bar-fill {
-      height: 100%;
-      border-radius: 999px;
-      background: linear-gradient(90deg, #4b6bfb, #22c55e);
-    }
-    .teacher-only { display: block; }
-    .student-only { display: none; }
-    .admin-only { display: none; }
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            gap: 12px;
+        }
 
-    .table-footnote {
-      margin-top: 6px;
-      font-size: 10px;
-      color: var(--text-sub);
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-    .privacy-card {
-      margin-top: 14px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1px solid #e5e7eb;
-      background: #f9fafb;
-      font-size: 11px;
-      color: var(--text-sub);
-    }
-    .privacy-title {
-      font-weight: 600;
-      color: #111827;
-      margin-bottom: 4px;
-    }
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 14px;
+            background: conic-gradient(from 160deg, #4b6bfb, #22c55e, #f97316, #4b6bfb);
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+            font-size: clamp(16px, 1.3vw + 10px, 20px);
+        }
 
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.45);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 40;
-      display: none;
-    }
-    .modal-dialog {
-      width: min(480px, 90vw);
-      max-height: 90vh;
-      background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.4);
-      display: flex;
-      flex-direction: column;
-    }
-    .modal-header {
-      padding: 10px 14px 8px;
-      border-bottom: 1px solid #e5e7eb;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .modal-title {
-      font-size: 14px;
-      font-weight: 600;
-    }
-    .modal-close-btn {
-      border: none;
-      background: transparent;
-      font-size: 18px;
-      cursor: pointer;
-      line-height: 1;
-    }
-    .modal-body {
-      padding: 10px 14px;
-      font-size: 12px;
-      color: var(--text-sub);
-      overflow-y: auto;
-    }
-    .modal-footer {
-      padding: 8px 14px 10px;
-      border-top: 1px solid #e5e7eb;
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-    }
-    .modal-input-group {
-      margin-top: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .modal-consent-label {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 8px;
-    }
+        .brand-text-main {
+            font-size: clamp(18px, 1.4vw + 12px, 22px);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+        }
 
-    @media (max-width: 900px) {
-      .summary-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-      .content-grid {
-        grid-template-columns: minmax(0, 1fr);
-      }
-    }
-    @media (max-width: 640px) {
-      header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      .summary-grid {
-        grid-template-columns: minmax(0, 1fr);
-      }
-      .form-grid {
-        grid-template-columns: minmax(0, 1fr);
-      }
-      .btn-row .btn {
-        flex: 1;
-        justify-content: center;
-      }
-    }
-  </style>
+        .brand-text-sub {
+            font-size: clamp(11px, 0.7vw + 8px, 13px);
+            color: var(--text-sub);
+        }
+
+        .role-toggle {
+            display: inline-flex;
+            padding: 4px;
+            border-radius: 999px;
+            background: #e5e7eb;
+            gap: 4px;
+        }
+
+        .role-toggle button {
+            border: none;
+            border-radius: 999px;
+            padding: 6px 14px;
+            font-size: clamp(11px, 0.6vw + 8px, 13px);
+            cursor: pointer;
+            background: transparent;
+            color: var(--text-sub);
+            transition: all 0.18s ease;
+        }
+
+        .role-toggle button.active {
+            background: #ffffff;
+            color: var(--text-main);
+            font-weight: 600;
+            box-shadow: 0 6px 16px rgba(148, 163, 184, 0.45);
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .login-card,
+        .card,
+        .summary-card,
+        .privacy-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .login-card {
+            padding: 10px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .login-info-title {
+            font-size: clamp(13px, 0.9vw + 10px, 15px);
+            font-weight: 600;
+        }
+
+        .login-info-desc {
+            font-size: clamp(10px, 0.5vw + 7px, 12px);
+            color: var(--text-sub);
+        }
+
+        .login-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .login-name-display {
+            font-size: clamp(11px, 0.6vw + 8px, 13px);
+            color: var(--text-sub);
+        }
+
+        .google-btn {
+            border-radius: 999px;
+            border: 1px solid #d1d5db;
+            background: #ffffff;
+            padding: 6px 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: clamp(11px, 0.6vw + 8px, 13px);
+            box-shadow: 0 3px 6px rgba(15, 23, 42, 0.08);
+        }
+
+        .google-btn-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            background: conic-gradient(from 45deg, #4285F4, #34A853, #FBBC05, #EA4335, #4285F4);
+        }
+
+        .admin-btn {
+            border-radius: 999px;
+            border: 1px solid #fecaca;
+            background: #fee2e2;
+            color: #b91c1c;
+            font-size: 11px;
+            padding: 6px 10px;
+            cursor: pointer;
+            display: none;
+        }
+
+        /* GSI 기본 버튼 컨테이너 화면에서 숨기기 */
+        #gsi-button-container {
+            position: absolute;
+            top: -10000px;
+            left: -10000px;
+            visibility: hidden;
+        }
+
+        .shelf-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+            padding: 12px 16px 10px;
+            margin-bottom: 6px;
+        }
+
+        .shelf-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            gap: 10px;
+        }
+
+        .shelf-title {
+            font-size: clamp(13px, 0.9vw + 10px, 15px);
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .shelf-sub {
+            font-size: clamp(10px, 0.5vw + 7px, 12px);
+            color: var(--text-sub);
+        }
+
+        .shelf-strip {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scroll-snap-type: x mandatory;
+        }
+
+        .shelf-strip::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .shelf-strip::-webkit-scrollbar-thumb {
+            background: #cbd5f5;
+            border-radius: 999px;
+        }
+
+        .book-chip {
+            min-width: 120px;
+            max-width: 160px;
+            flex: 0 0 auto;
+            scroll-snap-align: start;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #eef2ff, #e0ecff);
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: clamp(11px, 0.7vw + 8px, 13px);
+        }
+
+        .book-chip-title {
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .book-chip-meta {
+            font-size: clamp(10px, 0.5vw + 7px, 11px);
+            color: var(--text-sub);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .summary-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .summary-label {
+            font-size: clamp(10px, 0.6vw + 7px, 12px);
+            color: var(--text-sub);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .summary-pill {
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: var(--primary-soft);
+            color: var(--primary);
+            font-size: clamp(9px, 0.4vw + 7px, 11px);
+            font-weight: 600;
+        }
+
+        .summary-main {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .summary-value {
+            font-size: clamp(18px, 1.2vw + 14px, 24px);
+            font-weight: 700;
+        }
+
+        .summary-unit {
+            font-size: clamp(10px, 0.5vw + 7px, 12px);
+            color: var(--text-sub);
+        }
+
+        .summary-foot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: clamp(10px, 0.5vw + 7px, 12px);
+            color: var(--text-sub);
+        }
+
+        .summary-chip {
+            padding: 3px 9px;
+            border-radius: 999px;
+            background: #ecfdf3;
+            color: #16a34a;
+            font-weight: 500;
+            font-size: clamp(9px, 0.4vw + 7px, 11px);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+            gap: 16px;
+            align-items: start;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+            padding: 16px 16px 14px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+
+        .card-title {
+            font-size: clamp(13px, 0.9vw + 10px, 15px);
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-badge {
+            font-size: clamp(10px, 0.5vw + 7px, 11px);
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: #eef2ff;
+            color: #4b6bfb;
+            font-weight: 500;
+        }
+
+        .card-desc {
+            font-size: clamp(10px, 0.5vw + 7px, 12px);
+            color: var(--text-sub);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px 12px;
+            font-size: 12px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 12px;
+        }
+
+        label {
+            font-size: clamp(11px, 0.6vw + 8px, 13px);
+        }
+
+        label span.req {
+            color: #ef4444;
+            margin-left: 4px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            border-radius: 9px;
+            border: 1px solid var(--border);
+            padding: 7px 9px;
+            font-size: clamp(11px, 0.6vw + 8px, 13px);
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+            background: #f9fafb;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.2);
+            background: #ffffff;
+        }
+
+        .inline {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: clamp(10px, 0.5vw + 7px, 12px);
+            color: var(--text-sub);
+        }
+
+        .btn-row {
+            margin-top: 10px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .btn {
+            border-radius: 999px;
+            border: none;
+            padding: 7px 16px;
+            font-size: clamp(11px, 0.6vw + 8px, 13px);
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+            white-space: nowrap;
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+            box-shadow: none;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-sub);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4b6bfb, #6366f1);
+            color: #ffffff;
+            box-shadow: 0 10px 22px rgba(79, 70, 229, 0.55);
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.03);
+        }
+
+        .btn-primary span.dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .table-card {
+            margin-top: 2px;
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: clamp(11px, 0.6vw + 8px, 13px);
+            min-width: 680px;
+        }
+
+        thead {
+            background: #f3f4ff;
+        }
+
+        th,
+        td {
+            padding: 7px 9px;
+            text-align: left;
+            border-bottom: 1px solid #edf0f5;
+        }
+
+        th {
+            font-weight: 600;
+            color: #4b5563;
+            font-size: clamp(10px, 0.55vw + 7px, 12px);
+        }
+
+        tbody tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 7px;
+            border-radius: 999px;
+            font-size: clamp(9px, 0.45vw + 7px, 11px);
+            gap: 4px;
+        }
+
+        .tag-book {
+            background: #eef2ff;
+            color: #4b6bfb;
+        }
+
+        .tag-done {
+            background: #ecfdf3;
+            color: #15803d;
+        }
+
+        .tag-progress {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .progress-bar-shell {
+            width: 100%;
+            height: 6px;
+            border-radius: 999px;
+            background: #e5e7eb;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #4b6bfb, #22c55e);
+        }
+
+        .table-footnote {
+            margin-top: 6px;
+            font-size: clamp(9px, 0.45vw + 7px, 11px);
+            color: var(--text-sub);
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .teacher-only {
+            display: block;
+        }
+
+        .student-only {
+            display: none;
+        }
+
+        .privacy-card {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
+            font-size: clamp(10px, 0.5vw + 7px, 12px);
+            color: var(--text-sub);
+        }
+
+        .privacy-title {
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 4px;
+        }
+
+        .privacy-list {
+            margin: 4px 0 0;
+            padding-left: 16px;
+        }
+
+        .privacy-list li {
+            margin-bottom: 2px;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 40;
+            display: none;
+        }
+
+        .modal-dialog {
+            width: min(480px, 90vw);
+            max-height: 90vh;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.4);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: 10px 14px 8px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: clamp(14px, 1vw + 11px, 16px);
+            font-weight: 600;
+        }
+
+        .modal-close-btn {
+            border: none;
+            background: transparent;
+            font-size: 18px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .modal-body {
+            padding: 10px 14px;
+            font-size: clamp(11px, 0.6vw + 8px, 13px);
+            color: var(--text-sub);
+            overflow-y: auto;
+        }
+
+        .modal-section-title {
+            font-weight: 600;
+            color: #111827;
+            margin: 8px 0 4px;
+        }
+
+        .modal-body ul {
+            margin: 0 0 4px;
+            padding-left: 18px;
+        }
+
+        .modal-input-group {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .modal-input-group input {
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            padding: 6px 8px;
+            font-size: 12px;
+        }
+
+        .modal-consent-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .modal-footer {
+            padding: 8px 14px 10px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        @media (max-width: 900px) {
+            .summary-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .content-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .summary-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .form-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .btn-row {
+                justify-content: stretch;
+            }
+
+            .btn-row .btn {
+                flex: 1;
+                justify-content: center;
+            }
+        }
+    </style>
 </head>
 <body>
 <div class="app-shell">
-  <header>
-    <div class="brand">
-      <div class="brand-logo">R</div>
-      <div>
-        <div class="brand-text-main">Reading Dashboard</div>
-        <div class="brand-text-sub">교실 독서 기록 관리</div>
-      </div>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <div class="role-toggle">
-        <button id="teacher-mode-btn" class="active" type="button">선생님</button>
-        <button id="student-mode-btn" type="button">학생</button>
-      </div>
-      <button id="admin-mode-btn" type="button" class="admin-btn">ADMIN</button>
-    </div>
-  </header>
-
-  <section class="login-card">
-    <div>
-      <div class="login-info-title">로그인 / 개인정보 동의</div>
-      <div class="login-info-desc">학생 이름 + 반 정보는 선생님과 관리자만 확인할 수 있습니다.</div>
-    </div>
-    <div class="login-right">
-      <button type="button" class="google-btn" id="google-login-ui-btn">
-        <span class="google-btn-icon"></span>
-        <span>Google 계정으로 로그인</span>
-      </button>
-      <button type="button" class="google-btn" id="open-privacy-modal-btn">
-        <span class="google-btn-icon"></span>
-        <span>개인정보 안내</span>
-      </button>
-      <span class="login-name-display" id="login-status-text">로그인 필요</span>
-    </div>
-  </section>
-
-  <div id="gsi-button-container"></div>
-
-  <section class="shelf-card">
-    <div class="shelf-header">
-      <div class="shelf-title">우리 반 책장</div>
-      <div class="shelf-sub" id="shelf-count-text">0권</div>
-    </div>
-    <div class="shelf-strip" id="book-shelf"></div>
-  </section>
-
-  <main>
-    <section class="summary-grid">
-      <article class="summary-card">
-        <div class="summary-label">
-          <span>오늘 읽은 페이지</span>
-          <span class="summary-pill">Today</span>
-        </div>
-        <div class="summary-main">
-          <div class="summary-value" id="summary-pages">0</div>
-          <div class="summary-unit">쪽</div>
-        </div>
-        <div class="summary-foot">
-          <span id="summary-compare">0</span>
-          <span class="summary-chip" id="summary-goal">0 / 목표</span>
-        </div>
-      </article>
-      <article class="summary-card">
-        <div class="summary-label">
-          <span>학생당 평균</span>
-          <span class="summary-pill">Today</span>
-        </div>
-        <div class="summary-main">
-          <div class="summary-value" id="summary-avg">0</div>
-          <div class="summary-unit">쪽</div>
-        </div>
-        <div class="summary-foot">
-          <span id="summary-students">참여 학생: 0명</span>
-          <span id="summary-done">완독 학생: 0명</span>
-        </div>
-      </article>
-      <article class="summary-card">
-        <div class="summary-label">
-          <span>진행 중인 책</span>
-          <span class="summary-pill">Book</span>
-        </div>
-        <div class="summary-main">
-          <div class="summary-value" id="summary-book">-</div>
-        </div>
-        <div class="summary-foot">
-          <span id="summary-book-detail">0쪽 · 0반</span>
-          <span id="summary-book-progress">진행률 0%</span>
-        </div>
-      </article>
-    </section>
-
-    <section class="content-grid">
-      <!-- 선생님 카드 -->
-      <article class="card teacher-only">
-        <div class="card-header">
-          <div class="card-title">
-            <span class="card-badge">TEACHER</span>
-            책 등록 / 수정
-          </div>
-          <div class="card-desc">반 이름과 책 정보를 입력해 주세요.</div>
-        </div>
-        <div class="form-grid">
-          <div class="form-group">
-            <label>반 이름 <span class="req">*</span></label>
-            <input id="class-name-input" type="text" placeholder="4-2">
-          </div>
-          <div class="form-group">
-            <label>책 제목 <span class="req">*</span></label>
-            <input id="book-title-input" type="text" placeholder="예: 이상한 과자 가게 전천당">
-          </div>
-          <div class="form-group">
-            <label>지은이</label>
-            <input id="book-author-input" type="text" placeholder="작가명">
-          </div>
-          <div class="form-group">
-            <label>전체 페이지 수 <span class="req">*</span></label>
-            <input id="book-pages-input" type="number" min="1" placeholder="248">
-          </div>
-        </div>
-        <div class="btn-row">
-          <button class="btn btn-ghost" type="button" id="book-reset-btn">초기화</button>
-          <button class="btn btn-primary" type="button" id="book-add-btn">
-            <span class="dot"></span>
-            저장
-          </button>
-        </div>
-      </article>
-
-      <!-- 학생 카드 -->
-      <article class="card student-only">
-        <div class="card-header">
-          <div class="card-title">
-            <span class="card-badge" style="background:#ecfdf3;color:#16a34a;">STUDENT</span>
-            오늘 읽은 책 기록하기
-          </div>
-          <div class="card-desc">이름과 반, 책을 선택해서 오늘 읽은 분량을 적어 주세요.</div>
-        </div>
-        <div class="form-grid">
-          <div class="form-group">
-            <label>이름 <span class="req">*</span></label>
-            <input id="student-name-input" type="text" placeholder="홍길동">
-          </div>
-          <div class="form-group">
-            <label>반 <span class="req">*</span></label>
-            <input id="student-class-input" type="text" placeholder="4-2">
-          </div>
-          <div class="form-group">
-            <label>책 선택 <span class="req">*</span></label>
-            <select id="student-book-select">
-              <option value="">책을 선택하세요</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>오늘 읽은 페이지 수 <span class="req">*</span></label>
-            <input id="today-pages-input" type="number" min="0" placeholder="12">
-          </div>
-          <div class="form-group">
-            <label>오늘 마지막 페이지(선택)</label>
-            <input id="last-page-input" type="number" min="0" placeholder="38">
-          </div>
-          <div class="form-group">
-            <label>목표 페이지(선택)</label>
-            <div class="inline" style="display:flex;align-items:center;gap:6px;">
-              <input id="target-pages-input" type="number" min="0" placeholder="150" style="flex:1;">
-              <span style="font-size:11px;color:var(--text-sub);">까지 읽기</span>
+    <header>
+        <div class="brand">
+            <div class="brand-logo">R</div>
+            <div>
+                <div class="brand-text-main">Reading Dashboard</div>
+                <div class="brand-text-sub">교실 독서 기록 관리</div>
             </div>
-          </div>
         </div>
-        <div class="btn-row">
-          <button class="btn btn-ghost" type="button" id="record-reset-btn">초기화</button>
-          <button class="btn btn-primary" type="button" id="record-save-btn">
-            <span class="dot"></span>
-            기록 저장
-          </button>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <div class="role-toggle">
+                <!-- 텍스트만 교사/학생 모드로 변경 -->
+                <button id="teacher-mode-btn" class="active" type="button">교사 모드</button>
+                <button id="student-mode-btn" type="button">학생 모드</button>
+            </div>
+            <button id="admin-mode-btn" type="button" class="admin-btn">ADMIN</button>
         </div>
-      </article>
+    </header>
 
-      <!-- 관리자 패널 -->
-      <article class="card admin-only">
-        <div class="card-header">
-          <div class="card-title">
-            <span class="card-badge" style="background:#fee2e2;color:#b91c1c;">ADMIN</span>
-            관리자 패널
-          </div>
-          <div class="card-desc">전체 반의 독서 기록을 조회할 수 있습니다.</div>
+    <section class="login-card">
+        <div>
+            <div class="login-info-title">로그인 / 개인정보 동의</div>
+            <div class="login-info-desc">학생 이름 + 반 정보는 선생님과 관리자만 확인할 수 있습니다.</div>
         </div>
-        <div class="form-grid">
-          <div class="form-group">
-            <label>반 선택</label>
-            <select id="admin-class-select">
-              <option value="ALL">전체 반</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>보기 옵션</label>
-            <select id="admin-view-mode">
-              <option value="table">기록 테이블</option>
-              <option value="stats">통계만 보기</option>
-            </select>
-          </div>
+        <div class="login-right">
+            <button type="button" class="google-btn" id="google-login-ui-btn">
+                <span class="google-btn-icon"></span>
+                <span>Google 계정으로 로그인</span>
+            </button>
+            <button type="button" class="google-btn" id="open-privacy-modal-btn">
+                <span class="google-btn-icon"></span>
+                <span>개인정보 안내</span>
+            </button>
+            <span class="login-name-display" id="login-status-text">로그인 안 됨 · 미동의</span>
         </div>
-        <div style="margin-top:10px;font-size:11px;color:#6b7280;">
-          Google 계정 role이 <strong>admin</strong>인 사용자만 ADMIN 버튼을 볼 수 있습니다.
-        </div>
-      </article>
     </section>
 
-    <!-- 기록 테이블 / 랭킹 (선생님 + 어드민용) -->
-    <section class="card table-card teacher-only admin-only">
-      <div class="card-header">
-        <div class="card-title">
-          <span class="card-badge" style="background:#e0f2fe;color:#0369a1;">DB</span>
-          독서 기록 테이블
-        </div>
-        <div class="card-desc">Railway PostgreSQL DB와 연동된 기록입니다.</div>
-      </div>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-          <tr>
-            <th>이름</th>
-            <th>반</th>
-            <th>책</th>
-            <th>오늘</th>
-            <th>누적</th>
-            <th>진행률</th>
-            <th>상태</th>
-            <th>관리</th>
-          </tr>
-          </thead>
-          <tbody id="record-table-body"></tbody>
-        </table>
-      </div>
+    <!-- GSI 실제 버튼 (숨김 상태에서 클릭용으로만 사용) -->
+    <div id="gsi-button-container"></div>
 
-      <div class="table-footnote">
-        <span>Railway PostgreSQL DB에 저장된 데이터입니다.</span>
-        <span>삭제/수정은 선생님과 관리자만 가능합니다.</span>
-      </div>
-
-      <div style="margin-top:16px;">
-        <div style="font-size:12px;font-weight:600;margin-bottom:6px;">누적 페이지 랭킹 TOP 5</div>
-        <div class="table-wrapper">
-          <table>
-            <thead>
-            <tr>
-              <th>순위</th>
-              <th>이름</th>
-              <th>반</th>
-              <th>책</th>
-              <th>누적 쪽수</th>
-            </tr>
-            </thead>
-            <tbody id="ranking-body"></tbody>
-          </table>
+    <!-- 우리 반 책장 -->
+    <section class="shelf-card">
+        <div class="shelf-header">
+            <div class="shelf-title">우리 반 책장</div>
+            <div class="shelf-sub" id="shelf-count-text">0권</div>
         </div>
-      </div>
+        <div class="shelf-strip" id="book-shelf"></div>
     </section>
 
-    <section class="privacy-card">
-      <div class="privacy-title">개인정보 및 보관 안내</div>
-      <ul class="privacy-list">
-        <li>이름, 반 정보, 읽은 페이지 수만 저장합니다.</li>
-        <li>Railway 서버의 PostgreSQL DB에 저장되며, 선생님/관리자만 확인할 수 있습니다.</li>
-        <li>Google 로그인 계정의 이메일은 인증 용도로만 사용합니다.</li>
-        <li>요청 시 해당 반 데이터는 삭제할 수 있습니다.</li>
-      </ul>
-    </section>
-  </main>
+    <main>
+        <!-- 요약 카드 -->
+        <section class="summary-grid">
+            <article class="summary-card">
+                <div class="summary-label">
+                    <span>오늘 읽은 페이지</span>
+                    <span class="summary-pill">Today</span>
+                </div>
+                <div class="summary-main">
+                    <div class="summary-value" id="summary-pages">0</div>
+                    <div class="summary-unit">쪽</div>
+                </div>
+                <div class="summary-foot">
+                    <span id="summary-compare">0</span>
+                    <span class="summary-chip" id="summary-goal">0 / 목표</span>
+                </div>
+            </article>
+            <article class="summary-card">
+                <div class="summary-label">
+                    <span>학생당 평균</span>
+                    <span class="summary-pill">Today</span>
+                </div>
+                <div class="summary-main">
+                    <div class="summary-value" id="summary-avg">0</div>
+                    <div class="summary-unit">쪽</div>
+                </div>
+                <div class="summary-foot">
+                    <span id="summary-students">참여 학생: 0명</span>
+                    <span id="summary-done">완독 학생: 0명</span>
+                </div>
+            </article>
+            <article class="summary-card">
+                <div class="summary-label">
+                    <span>진행 중인 책</span>
+                    <span class="summary-pill">Book</span>
+                </div>
+                <div class="summary-main">
+                    <div class="summary-value" id="summary-book">-</div>
+                </div>
+                <div class="summary-foot">
+                    <span id="summary-book-detail">0쪽 · 0반</span>
+                    <span id="summary-book-progress">진행률 0%</span>
+                </div>
+            </article>
+        </section>
+
+        <!-- 메인 컨텐츠 -->
+        <section class="content-grid">
+            <!-- 교사용 카드 -->
+            <article class="card teacher-only">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-badge">TEACHER</span>
+                        책 등록 / 수정
+                    </div>
+                    <div class="card-desc">반 이름과 책 정보를 입력해 주세요.</div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>반 이름 <span class="req">*</span></label>
+                        <input id="class-name-input" type="text" placeholder="4-2" />
+                    </div>
+                    <div class="form-group">
+                        <label>책 제목 <span class="req">*</span></label>
+                        <input id="book-title-input" type="text" placeholder="예: 이상한 과자 가게 전천당" />
+                    </div>
+                    <div class="form-group">
+                        <label>지은이</label>
+                        <input id="book-author-input" type="text" placeholder="작가명" />
+                    </div>
+                    <div class="form-group">
+                        <label>전체 페이지 수 <span class="req">*</span></label>
+                        <input id="book-pages-input" type="number" min="1" placeholder="248" />
+                    </div>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-ghost" type="button" id="book-reset-btn">초기화</button>
+                    <button class="btn btn-primary" type="button" id="book-add-btn">
+                        <span class="dot"></span>
+                        저장
+                    </button>
+                </div>
+            </article>
+
+            <!-- 학생 카드 -->
+            <article class="card student-only">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-badge" style="background:#ecfdf3;color:#16a34a;">STUDENT</span>
+                        오늘 읽은 책 기록하기
+                    </div>
+                    <div class="card-desc">이름과 반, 책을 선택해서 오늘 읽은 분량을 적어 주세요.</div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>이름 <span class="req">*</span></label>
+                        <input id="student-name-input" type="text" placeholder="홍길동" />
+                    </div>
+                    <div class="form-group">
+                        <label>반 <span class="req">*</span></label>
+                        <input id="student-class-input" type="text" placeholder="4-2" />
+                    </div>
+                    <div class="form-group">
+                        <label>책 선택 <span class="req">*</span></label>
+                        <select id="student-book-select">
+                            <option value="">책을 선택하세요</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>오늘 읽은 페이지 수 <span class="req">*</span></label>
+                        <input id="today-pages-input" type="number" min="0" placeholder="12" />
+                    </div>
+                    <div class="form-group">
+                        <label>오늘 마지막 페이지(선택)</label>
+                        <input id="last-page-input" type="number" min="0" placeholder="38" />
+                    </div>
+                    <div class="form-group">
+                        <label>목표 페이지(선택)</label>
+                        <div class="inline">
+                            <input id="target-pages-input" type="number" min="0" placeholder="150" style="flex:1;" />
+                            <span>까지 읽기</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-ghost" type="button" id="record-reset-btn">초기화</button>
+                    <button class="btn btn-primary" type="button" id="record-save-btn">
+                        <span class="dot"></span>
+                        기록 저장
+                    </button>
+                </div>
+            </article>
+
+            <!-- (기존 paste.txt에는 관리자 카드가 없으므로 여기서는 생략) -->
+        </section>
+
+        <!-- 기록 테이블 -->
+        <section class="card table-card teacher-only">
+            <div class="card-header">
+                <div class="card-title">
+                    <span class="card-badge" style="background:#e0f2fe;color:#0369a1;">DB</span>
+                    독서 기록 테이블
+                </div>
+                <div class="card-desc">Railway DB와 연동된 기록입니다.</div>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>이름</th>
+                        <th>반</th>
+                        <th>책</th>
+                        <th>오늘</th>
+                        <th>누적</th>
+                        <th>진행률</th>
+                        <th>상태</th>
+                        <th>관리</th>
+                    </tr>
+                    </thead>
+                    <tbody id="record-table-body"></tbody>
+                </table>
+            </div>
+            <div class="table-footnote">
+                <span>Railway PostgreSQL DB에 저장된 데이터입니다.</span>
+                <span>삭제/수정은 선생님과 관리자만 가능합니다.</span>
+            </div>
+        </section>
+
+        <section class="privacy-card">
+            <div class="privacy-title">개인정보 및 보관 안내</div>
+            <ul class="privacy-list">
+                <li>이름, 반 정보, 읽은 페이지 수만 저장합니다.</li>
+                <li>Railway 서버의 PostgreSQL DB에 저장되며, 선생님/관리자만 확인할 수 있습니다.</li>
+                <li>Google 로그인 계정의 이메일은 인증 용도로만 사용합니다.</li>
+                <li>요청 시 해당 반 데이터는 삭제할 수 있습니다.</li>
+            </ul>
+        </section>
+    </main>
 </div>
 
 <!-- 개인정보 모달 -->
 <div class="modal-backdrop" id="privacy-modal">
-  <div class="modal-dialog">
-    <div class="modal-header">
-      <div class="modal-title">개인정보 처리 안내</div>
-      <button type="button" class="modal-close-btn" id="privacy-close-btn">&times;</button>
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <div class="modal-title">개인정보 처리 안내</div>
+            <button type="button" class="modal-close-btn" id="privacy-close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p class="modal-section-title">1. 수집 항목</p>
+            <ul>
+                <li>이름, 반, 읽은 책 정보(제목, 페이지 수)</li>
+                <li>오늘 읽은 페이지 수, 누적 페이지 수</li>
+            </ul>
+            <p class="modal-section-title">2. 이용 목적</p>
+            <ul>
+                <li>교실 내 독서 활동 기록 및 통계 제공</li>
+                <li>선생님/관리자의 학습 지도 참고</li>
+            </ul>
+            <p class="modal-section-title">3. 보관 기간</p>
+            <ul>
+                <li>해당 학년도 종료 시까지 보관 후 일괄 삭제</li>
+            </ul>
+            <p class="modal-section-title">4. 제3자 제공 없음</p>
+            <ul>
+                <li>학교/반 내부 지도 목적 외로는 사용되지 않습니다.</li>
+            </ul>
+            <p class="modal-section-title">5. 동의 거부</p>
+            <ul>
+                <li>동의하지 않아도 사용은 가능하나, Google 계정을 통한 저장 기능은 제한될 수 있습니다.</li>
+            </ul>
+            <hr />
+            <div class="modal-input-group">
+                <label>학생 이름</label>
+                <input type="text" id="modal-name-input" placeholder="홍길동" />
+            </div>
+            <label class="modal-consent-label">
+                <input type="checkbox" id="modal-consent-checkbox" />
+                <span>위 내용을 읽었으며, 개인정보 수집 및 이용에 동의합니다.</span>
+            </label>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" id="privacy-cancel-btn">취소</button>
+            <button type="button" class="btn btn-primary" id="privacy-accept-btn">동의</button>
+        </div>
     </div>
-    <div class="modal-body">
-      <p><strong>1. 수집 항목</strong></p>
-      <ul>
-        <li>이름, 반, 읽은 책 정보(제목, 페이지 수)</li>
-        <li>오늘 읽은 페이지 수, 누적 페이지 수</li>
-      </ul>
-      <p><strong>2. 이용 목적</strong></p>
-      <ul>
-        <li>교실 내 독서 활동 기록 및 통계 제공</li>
-        <li>선생님/관리자의 학습 지도 참고</li>
-      </ul>
-      <p><strong>3. 보관 기간</strong></p>
-      <ul>
-        <li>해당 학년도 종료 시까지 보관 후 일괄 삭제</li>
-      </ul>
-      <p><strong>4. 제3자 제공 없음</strong></p>
-      <ul>
-        <li>학교/반 내부 지도 목적 외로는 사용되지 않습니다.</li>
-      </ul>
-      <p><strong>5. 동의 거부</strong></p>
-      <ul>
-        <li>동의하지 않아도 사용은 가능하나, Google 계정을 통한 저장 기능은 제한될 수 있습니다.</li>
-      </ul>
-      <hr />
-      <div class="modal-input-group">
-        <label>학생 이름</label>
-        <input type="text" id="modal-name-input" placeholder="홍길동" />
-      </div>
-      <label class="modal-consent-label">
-        <input type="checkbox" id="modal-consent-checkbox" />
-        <span>위 내용을 읽었으며, 개인정보 수집 및 이용에 동의합니다.</span>
-      </label>
-    </div>
-    <div class="modal-footer">
-      <button type="button" class="btn btn-ghost" id="privacy-cancel-btn">취소</button>
-      <button type="button" class="btn btn-primary" id="privacy-accept-btn">동의</button>
-    </div>
-  </div>
 </div>
 
 <script>
-  const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID";
+    const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID";
 
-  const teacherModeBtn = document.getElementById("teacher-mode-btn");
-  const studentModeBtn = document.getElementById("student-mode-btn");
-  const adminModeBtn   = document.getElementById("admin-mode-btn");
+    const teacherModeBtn = document.getElementById("teacher-mode-btn");
+    const studentModeBtn = document.getElementById("student-mode-btn");
+    const adminModeBtn   = document.getElementById("admin-mode-btn");
 
-  const loginStatusText = document.getElementById("login-status-text");
-  const googleLoginUiBtn = document.getElementById("google-login-ui-btn");
-  const openPrivacyModalBtn = document.getElementById("open-privacy-modal-btn");
+    const loginStatusText = document.getElementById("login-status-text");
+    const googleLoginUiBtn = document.getElementById("google-login-ui-btn");
+    const openPrivacyModalBtn = document.getElementById("open-privacy-modal-btn");
 
-  const privacyModal = document.getElementById("privacy-modal");
-  const privacyCloseBtn = document.getElementById("privacy-close-btn");
-  const privacyCancelBtn = document.getElementById("privacy-cancel-btn");
-  const privacyAcceptBtn = document.getElementById("privacy-accept-btn");
-  const modalNameInput = document.getElementById("modal-name-input");
-  const modalConsentCheckbox = document.getElementById("modal-consent-checkbox");
+    const privacyModal = document.getElementById("privacy-modal");
+    const privacyCloseBtn = document.getElementById("privacy-close-btn");
+    const privacyCancelBtn = document.getElementById("privacy-cancel-btn");
+    const privacyAcceptBtn = document.getElementById("privacy-accept-btn");
+    const modalNameInput = document.getElementById("modal-name-input");
+    const modalConsentCheckbox = document.getElementById("modal-consent-checkbox");
 
-  const gsiButtonContainer = document.getElementById("gsi-button-container");
+    const gsiButtonContainer = document.getElementById("gsi-button-container");
 
-  const bookTitleInput = document.getElementById("book-title-input");
-  const bookAuthorInput = document.getElementById("book-author-input");
-  const bookPagesInput = document.getElementById("book-pages-input");
-  const classNameInput = document.getElementById("class-name-input");
-  const bookAddBtn = document.getElementById("book-add-btn");
-  const bookResetBtn = document.getElementById("book-reset-btn");
+    const bookTitleInput = document.getElementById("book-title-input");
+    const bookAuthorInput = document.getElementById("book-author-input");
+    const bookPagesInput = document.getElementById("book-pages-input");
+    const classNameInput = document.getElementById("class-name-input");
+    const bookAddBtn = document.getElementById("book-add-btn");
+    const bookResetBtn = document.getElementById("book-reset-btn");
 
-  const studentNameInput = document.getElementById("student-name-input");
-  const studentClassInput = document.getElementById("student-class-input");
-  const studentBookSelect = document.getElementById("student-book-select");
-  const todayPagesInput = document.getElementById("today-pages-input");
-  const lastPageInput = document.getElementById("last-page-input");
-  const targetPagesInput = document.getElementById("target-pages-input");
-  const recordSaveBtn = document.getElementById("record-save-btn");
-  const recordResetBtn = document.getElementById("record-reset-btn");
+    const studentNameInput = document.getElementById("student-name-input");
+    const studentClassInput = document.getElementById("student-class-input");
+    const studentBookSelect = document.getElementById("student-book-select");
+    const todayPagesInput = document.getElementById("today-pages-input");
+    const lastPageInput = document.getElementById("last-page-input");
+    const targetPagesInput = document.getElementById("target-pages-input");
+    const recordSaveBtn = document.getElementById("record-save-btn");
+    const recordResetBtn = document.getElementById("record-reset-btn");
 
-  const recordTableBody = document.getElementById("record-table-body");
-  const rankingBody = document.getElementById("ranking-body");
+    const recordTableBody = document.getElementById("record-table-body");
 
-  const summaryPages = document.getElementById("summary-pages");
-  const summaryAvg = document.getElementById("summary-avg");
-  const summaryStudents = document.getElementById("summary-students");
-  const summaryDone = document.getElementById("summary-done");
-  const summaryBook = document.getElementById("summary-book");
-  const summaryBookDetail = document.getElementById("summary-book-detail");
-  const summaryBookProgress = document.getElementById("summary-book-progress");
-  const summaryGoal = document.getElementById("summary-goal");
-  const summaryCompare = document.getElementById("summary-compare");
+    const summaryPages = document.getElementById("summary-pages");
+    const summaryAvg = document.getElementById("summary-avg");
+    const summaryStudents = document.getElementById("summary-students");
+    const summaryDone = document.getElementById("summary-done");
+    const summaryBook = document.getElementById("summary-book");
+    const summaryBookDetail = document.getElementById("summary-book-detail");
+    const summaryBookProgress = document.getElementById("summary-book-progress");
+    const summaryGoal = document.getElementById("summary-goal");
+    const summaryCompare = document.getElementById("summary-compare");
 
-  const shelf = document.getElementById("book-shelf");
-  const shelfCountText = document.getElementById("shelf-count-text");
+    const shelf = document.getElementById("book-shelf");
+    const shelfCountText = document.getElementById("shelf-count-text");
 
-  const adminClassSelect = document.getElementById("admin-class-select");
-  const adminViewMode = document.getElementById("admin-view-mode");
+    const STORAGE_KEY_PROFILE = "readingDashboardProfile";
 
-  const STORAGE_KEY_PROFILE = "readingDashboardProfile";
-
-  function loadProfile() {
-    const data = localStorage.getItem(STORAGE_KEY_PROFILE);
-    return data ? JSON.parse(data) : { name: "", consent: false, google: null, role: "student", classname: "" };
-  }
-
-  function saveProfile(profile) {
-    localStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(profile));
-  }
-
-  function getCurrentRole() {
-    const profile = loadProfile();
-    return profile.role || "student";
-  }
-
-  function getCurrentEmail() {
-    const profile = loadProfile();
-    return profile.google?.email || "";
-  }
-
-  function getCurrentClassName() {
-    const profile = loadProfile();
-    return profile.classname || "";
-  }
-
-  function updateLoginStatusText() {
-    const profile = loadProfile();
-    const googleEmail = profile.google?.email;
-    const googleName = profile.google?.name;
-    const displayName = profile.name || googleName || "로그인 필요";
-    const roleLabel = profile.role || "student";
-    if (profile.consent && profile.google) {
-      loginStatusText.textContent = `${displayName} (${googleEmail}, ${roleLabel})`;
-    } else {
-      loginStatusText.textContent = displayName;
-    }
-  }
-
-  function updateAdminButton() {
-    const role = getCurrentRole();
-    if (role === "admin") {
-      adminModeBtn.style.display = "inline-flex";
-    } else {
-      adminModeBtn.style.display = "none";
-    }
-  }
-
-  openPrivacyModalBtn.addEventListener("click", () => {
-    const profile = loadProfile();
-    modalNameInput.value = profile.name || profile.google?.name || "";
-    modalConsentCheckbox.checked = !!profile.consent;
-    privacyModal.style.display = "flex";
-  });
-
-  function closePrivacyModal() {
-    privacyModal.style.display = "none";
-  }
-
-  privacyCloseBtn.addEventListener("click", closePrivacyModal);
-  privacyCancelBtn.addEventListener("click", closePrivacyModal);
-
-  privacyAcceptBtn.addEventListener("click", () => {
-    const name = modalNameInput.value.trim();
-    const consent = modalConsentCheckbox.checked;
-    if (!consent) {
-      alert("개인정보 수집 및 이용에 동의해 주세요.");
-      return;
-    }
-    const profile = loadProfile();
-    profile.name = name || profile.name;
-    profile.consent = true;
-    saveProfile(profile);
-    updateLoginStatusText();
-    updateAdminButton();
-    closePrivacyModal();
-  });
-
-  function setMode(mode) {
-    const role = getCurrentRole();
-    const teacherOnlyEls = document.querySelectorAll(".teacher-only");
-    const studentOnlyEls = document.querySelectorAll(".student-only");
-    const adminOnlyEls   = document.querySelectorAll(".admin-only");
-
-    teacherOnlyEls.forEach(el => el.style.display = "none");
-    studentOnlyEls.forEach(el => el.style.display = "none");
-    adminOnlyEls.forEach(el => el.style.display = "none");
-
-    if (mode === "teacher" && !(role === "teacher" || role === "admin")) {
-      alert("교사/관리자 계정에서만 교사 모드로 볼 수 있습니다.");
-      teacherModeBtn.classList.remove("active");
-      studentModeBtn.classList.add("active");
-      studentOnlyEls.forEach(el => el.style.display = "block");
-      return;
+    function loadProfile() {
+        const data = localStorage.getItem(STORAGE_KEY_PROFILE);
+        return data
+            ? JSON.parse(data)
+            : { name: "", consent: false, google: null, role: "student", class_name: "" };
     }
 
-    if (mode === "teacher") {
-      teacherModeBtn.classList.add("active");
-      studentModeBtn.classList.remove("active");
-      teacherOnlyEls.forEach(el => el.style.display = "block");
-      if (role === "admin") {
-        adminOnlyEls.forEach(el => el.style.display = "block");
-        loadBooksAndRecords("ALL").catch(console.error);
-      } else {
-        loadBooksAndRecords().catch(console.error);
-      }
-    } else {
-      teacherModeBtn.classList.remove("active");
-      studentModeBtn.classList.add("active");
-      studentOnlyEls.forEach(el => el.style.display = "block");
+    function saveProfile(profile) {
+        localStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(profile));
     }
-  }
 
-  teacherModeBtn.addEventListener("click", () => setMode("teacher"));
-  studentModeBtn.addEventListener("click", () => setMode("student"));
-
-  async function fetchWithUser(url, options = {}) {
-    const email = getCurrentEmail();
-    const headers = {
-      ...(options.headers || {}),
-      "Content-Type": options.body ? "application/json" : (options.headers || {})["Content-Type"] || undefined,
-      "x-user-email": email || ""
-    };
-    if (!headers["Content-Type"]) delete headers["Content-Type"];
-    const res = await fetch(url, { ...options, headers });
-    return res;
-  }
-
-  async function loadBooksFromDb() {
-    const res = await fetchWithUser("/api/books");
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || "도서 조회 실패");
-    return data.books;
-  }
-
-  async function addBookToDb({ class_name, title, author, pages }) {
-    const res = await fetchWithUser("/api/books", {
-      method: "POST",
-      body: JSON.stringify({ class_name, title, author, pages })
-    });
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || "도서 등록 실패");
-    return data.book;
-  }
-
-  async function loadRecordsFromDb(selectedClassName) {
-    const role = getCurrentRole();
-    let className = getCurrentClassName();
-    if (role === "admin" && selectedClassName) {
-      className = selectedClassName === "ALL" ? "" : selectedClassName;
+    function getCurrentRole() {
+        const profile = loadProfile();
+        return profile.role || "student";
     }
-    const query = className ? `?classname=${encodeURIComponent(className)}` : "";
-    const res = await fetchWithUser(`/api/records${query}`);
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || "기록 조회 실패");
-    return data.records;
-  }
 
-  async function saveRecordToDb(payload) {
-    const res = await fetchWithUser("/api/records", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || "기록 저장 실패");
-    return data;
-  }
-
-  async function deleteRecordInDb(id) {
-    const res = await fetchWithUser(`/api/records/${id}`, {
-      method: "DELETE"
-    });
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || "기록 삭제 실패");
-    return data.id;
-  }
-
-  let allBooks = [];
-  let allRecords = [];
-
-  async function loadBooksAndRecords(selectedClassName) {
-    const books = await loadBooksFromDb();
-    allBooks = books;
-    renderShelf(allBooks);
-    const records = await loadRecordsFromDb(selectedClassName);
-    allRecords = records;
-    renderRecords(allRecords, allBooks);
-  }
-
-  function renderShelf(books) {
-    shelf.innerHTML = "";
-    shelfCountText.textContent = `${books.length}권`;
-    if (books.length === 0) {
-      const placeholder = document.createElement("div");
-      placeholder.className = "book-chip";
-      placeholder.innerHTML = `
-        <div class="book-chip-title">등록된 책이 없습니다</div>
-        <div class="book-chip-meta">먼저 선생님이 책을 추가해 주세요.</div>
-      `;
-      shelf.appendChild(placeholder);
-      summaryBook.textContent = "-";
-      summaryBookDetail.textContent = "0쪽 · 0반";
-      return;
+    function getCurrentEmail() {
+        const profile = loadProfile();
+        return profile.google?.email || "";
     }
-    books.forEach(book => {
-      const div = document.createElement("div");
-      div.className = "book-chip";
-      div.innerHTML = `
-        <div class="book-chip-title">${book.title}</div>
-        <div class="book-chip-meta">${book.class_name || book.classname || ""} · ${book.pages}쪽 ${book.author ? "· " + book.author : ""}</div>
-      `;
-      shelf.appendChild(div);
-    });
-    const current = books[books.length - 1];
-    summaryBook.textContent = current.title;
-    summaryBookDetail.textContent = `${current.pages}쪽 · ${(current.class_name || current.classname || "")}`;
-  }
 
-  async function refreshBookSelect() {
-    try {
-      const books = await loadBooksFromDb();
-      allBooks = books;
-      studentBookSelect.innerHTML = `<option value="">책을 선택하세요</option>`;
-      shelf.innerHTML = "";
-      shelfCountText.textContent = books.length;
-      if (books.length === 0) {
-        renderShelf([]);
-        return;
-      }
-      books.forEach(book => {
-        const option = document.createElement("option");
-        option.value = book.id;
-        option.textContent = `${book.title} (${book.class_name || book.classname || ""})`;
-        studentBookSelect.appendChild(option);
-      });
-      renderShelf(books);
-    } catch (e) {
-      console.error(e);
+    function getCurrentClassName() {
+        const profile = loadProfile();
+        return profile.class_name || "";
     }
-  }
 
-  function renderRecords(records, books) {
-    recordTableBody.innerHTML = "";
+    function updateLoginStatusText() {
+        const profile = loadProfile();
+        const googleEmail = profile.google?.email;
+        const googleName = profile.google?.name;
+        const displayName = profile.name || googleName || "(이름 미입력)";
+        const roleLabel = profile.role || "student";
+        if (profile.consent || profile.google) {
+            loginStatusText.textContent = `${displayName} · ${googleEmail || ""} · 역할: ${roleLabel}`;
+        } else {
+            loginStatusText.textContent = "로그인 안 됨 · 미동의";
+        }
+    }
 
-    let totalToday = 0;
-    const studentSet = new Set();
-    let doneCount = 0;
+    function updateAdminButton() {
+        const role = getCurrentRole();
+        if (role === "admin") {
+            adminModeBtn.style.display = "inline-flex";
+        } else {
+            adminModeBtn.style.display = "none";
+        }
+    }
 
-    records.forEach(rec => {
-      const book = books.find(b => b.id === rec.book_id);
-      const totalPagesBook = book ? book.pages : rec.book_pages || 0;
-      const progress = totalPagesBook ? Math.min(100, Math.round((rec.total_pages / totalPagesBook) * 100)) : 0;
-      const status =
-        progress >= 100
-          ? "완독"
-          : progress >= 80
-            ? "거의 완독"
-            : "읽는 중";
-
-      totalToday += rec.today_pages;
-      studentSet.add(rec.student_name + "|" + rec.class_name);
-      if (progress >= 100) doneCount++;
-
-      const tr = document.createElement("tr");
-      tr.dataset.recordId = rec.id;
-
-      tr.innerHTML = `
-        <td>${rec.student_name}</td>
-        <td>${rec.class_name}</td>
-        <td><span class="tag tag-book">${book ? book.title : (rec.book_title || "알 수 없음")}</span></td>
-        <td>${rec.today_pages}쪽</td>
-        <td>${rec.total_pages}쪽</td>
-        <td style="width:140px;">
-          <div class="progress-bar-shell">
-            <div class="progress-bar-fill" style="width:${progress}%;"></div>
-          </div>
-        </td>
-        <td>
-          <span class="tag ${status === "완독" || status === "거의 완독" ? "tag-done" : "tag-progress"}">
-            ${status}
-          </span>
-        </td>
-        <td>
-          <button class="btn btn-ghost btn-delete" type="button" style="padding:4px 8px;font-size:11px;color:#dc2626;">삭제</button>
-        </td>
-      `;
-      recordTableBody.appendChild(tr);
+    openPrivacyModalBtn.addEventListener("click", () => {
+        const profile = loadProfile();
+        modalNameInput.value = profile.name || profile.google?.name || "";
+        modalConsentCheckbox.checked = !!profile.consent;
+        privacyModal.style.display = "flex";
     });
 
-    summaryPages.textContent = totalToday;
-    const studentCount = studentSet.size;
-    summaryStudents.textContent = `참여 학생: ${studentCount}명`;
-    const avg = studentCount ? Math.round(totalToday / studentCount) : 0;
-    summaryAvg.textContent = avg;
-    summaryDone.textContent = `완독 학생: ${doneCount}명`;
-    summaryGoal.textContent = `${totalToday} / 목표`;
-    summaryCompare.textContent = `${totalToday}쪽`;
+    function closePrivacyModal() { privacyModal.style.display = "none"; }
+    privacyCloseBtn.addEventListener("click", closePrivacyModal);
+    privacyCancelBtn.addEventListener("click", closePrivacyModal);
 
-    if (records.length > 0) {
-      const lastRec = records[records.length - 1];
-      const currentBook = books.find(b => b.id === lastRec.book_id);
-      if (currentBook) {
-        const maxTotal = Math.max(
-          ...records.filter(r => r.book_id === currentBook.id).map(r => r.total_pages)
-        );
-        const progress = currentBook.pages ? Math.min(100, Math.round((maxTotal / currentBook.pages) * 100)) : 0;
-        summaryBookProgress.textContent = `진행률 ${progress}%`;
-      } else {
-        summaryBookProgress.textContent = "진행률 0%";
-      }
-    } else {
-      summaryBookProgress.textContent = "진행률 0%";
-    }
-
-    const bestByStudent = new Map();
-    records.forEach(rec => {
-      const key = rec.student_name + "|" + rec.class_name;
-      const prev = bestByStudent.get(key);
-      if (!prev || rec.total_pages > prev.total_pages) {
-        bestByStudent.set(key, rec);
-      }
-    });
-
-    const ranking = Array.from(bestByStudent.values())
-      .sort((a, b) => b.total_pages - a.total_pages)
-      .slice(0, 5);
-
-    rankingBody.innerHTML = "";
-    if (ranking.length === 0) {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td colspan="5" style="text-align:center;color:#9ca3af;font-size:12px;">
-          아직 랭킹을 계산할 기록이 없습니다.
-        </td>
-      `;
-      rankingBody.appendChild(tr);
-    } else {
-      ranking.forEach((rec, idx) => {
-        const book = books.find(b => b.id === rec.book_id);
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${idx + 1}</td>
-          <td>${rec.student_name}</td>
-          <td>${rec.class_name}</td>
-          <td>${book ? book.title : (rec.book_title || "알 수 없음")}</td>
-          <td>${rec.total_pages}쪽</td>
-        `;
-        rankingBody.appendChild(tr);
-      });
-    }
-  }
-
-  recordTableBody.addEventListener("click", async (e) => {
-    const role = getCurrentRole();
-    if (role !== "teacher" && role !== "admin") return;
-    const btn = e.target.closest("button");
-    if (!btn) return;
-    const tr = btn.closest("tr");
-    const recordId = tr?.dataset.recordId;
-    if (!recordId) return;
-
-    if (btn.classList.contains("btn-delete")) {
-      if (!confirm("이 기록을 삭제할까요?")) return;
-      try {
-        await deleteRecordInDb(recordId);
-        await loadBooksAndRecords(role === "admin" ? adminClassSelect.value : undefined);
-      } catch (err) {
-        alert(err.message);
-      }
-    }
-  });
-
-  bookAddBtn.addEventListener("click", async () => {
-    const role = getCurrentRole();
-    if (role !== "teacher" && role !== "admin") {
-      alert("책 등록은 선생님/관리자만 가능합니다.");
-      return;
-    }
-    const className = classNameInput.value.trim();
-    const title = bookTitleInput.value.trim();
-    const author = bookAuthorInput.value.trim();
-    const pages = parseInt(bookPagesInput.value, 10);
-    if (!className || !title || !pages) {
-      alert("반, 책 제목, 페이지 수를 모두 입력해 주세요.");
-      return;
-    }
-    try {
-      await addBookToDb({ class_name: className, title, author, pages });
-      await refreshBookSelect();
-      summaryBook.textContent = title;
-      summaryBookDetail.textContent = `${pages}쪽 · ${className}`;
-      classNameInput.value = "";
-      bookTitleInput.value = "";
-      bookAuthorInput.value = "";
-      bookPagesInput.value = "";
-    } catch (e) {
-      alert(e.message);
-    }
-  });
-
-  bookResetBtn.addEventListener("click", () => {
-    classNameInput.value = "";
-    bookTitleInput.value = "";
-    bookAuthorInput.value = "";
-    bookPagesInput.value = "";
-  });
-
-  recordSaveBtn.addEventListener("click", async () => {
-    const profile = loadProfile();
-    if (!profile.consent) {
-      alert("개인정보 동의 후 기록을 저장할 수 있습니다.");
-      return;
-    }
-    const studentName = studentNameInput.value.trim();
-    const className = studentClassInput.value.trim();
-    const bookId = studentBookSelect.value;
-    const todayPages = parseInt(todayPagesInput.value, 10) || 0;
-    const lastPage = parseInt(lastPageInput.value, 10) || 0;
-    const targetPages = parseInt(targetPagesInput.value, 10) || 0;
-
-    if (!studentName || !className || !bookId) {
-      alert("이름, 반, 책을 모두 입력/선택해 주세요.");
-      return;
-    }
-    if (todayPages <= 0) {
-      alert("오늘 읽은 페이지 수는 1 이상이어야 합니다.");
-      return;
-    }
-    try {
-      await saveRecordToDb({
-        student_name: studentName,
-        class_name: className,
-        book_id: Number(bookId),
-        today_pages: todayPages,
-        last_page: lastPage,
-        target_pages: targetPages
-      });
-      todayPagesInput.value = "";
-      lastPageInput.value = "";
-      targetPagesInput.value = "";
-      await loadBooksAndRecords(getCurrentRole() === "admin" ? adminClassSelect.value : undefined);
-    } catch (e) {
-      alert(e.message);
-    }
-  });
-
-  recordResetBtn.addEventListener("click", () => {
-    studentNameInput.value = "";
-    studentClassInput.value = "";
-    studentBookSelect.value = "";
-    todayPagesInput.value = "";
-    lastPageInput.value = "";
-    targetPagesInput.value = "";
-  });
-
-  adminModeBtn.addEventListener("click", () => {
-    const role = getCurrentRole();
-    if (role !== "admin") return;
-    teacherModeBtn.classList.remove("active");
-    studentModeBtn.classList.remove("active");
-    document.querySelectorAll(".teacher-only").forEach(el => el.style.display = "none");
-    document.querySelectorAll(".student-only").forEach(el => el.style.display = "none");
-    document.querySelectorAll(".admin-only").forEach(el => el.style.display = "block");
-    loadBooksAndRecords("ALL").catch(console.error);
-  });
-
-  adminClassSelect.addEventListener("change", () => {
-    const role = getCurrentRole();
-    if (role !== "admin") return;
-    const selected = adminClassSelect.value;
-    loadBooksAndRecords(selected).catch(console.error);
-  });
-
-  adminViewMode.addEventListener("change", () => {
-    const mode = adminViewMode.value;
-    const tableCard = document.querySelector(".table-card");
-    if (!tableCard) return;
-    tableCard.style.display = mode === "stats" ? "none" : "block";
-  });
-
-  async function loadClassListFromDb() {
-    const res = await fetchWithUser("/api/classes");
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || "반 목록 조회 실패");
-    return data.classes;
-  }
-
-  async function refreshAdminClassSelect() {
-    try {
-      const classes = await loadClassListFromDb();
-      adminClassSelect.innerHTML = `<option value="ALL">전체 반</option>`;
-      classes.forEach(cls => {
-        const option = document.createElement("option");
-        option.value = cls.name;
-        option.textContent = cls.name;
-        adminClassSelect.appendChild(option);
-      });
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  function handleGoogleResponse(response) {
-    const idToken = response.credential;
-    if (!idToken) return;
-    fetch("/auth/google", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ credential: idToken })
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (!data.ok) {
-          alert("Google 로그인 실패: " + data.error);
-          return;
+    privacyAcceptBtn.addEventListener("click", () => {
+        const name = modalNameInput.value.trim();
+        const consent = modalConsentCheckbox.checked;
+        if (!consent) {
+            alert("개인정보 처리방침에 동의해야 이용할 수 있습니다.");
+            return;
         }
         const profile = loadProfile();
-        profile.google = {
-          email: data.user.email,
-          name: data.user.name,
-          picture: data.user.picture
-        };
-        profile.role = data.user.role || "student";
-        profile.classname = data.user.classname || profile.classname;
-        if (!profile.name) profile.name = data.user.name;
+        profile.name = name;
+        profile.consent = true;
         saveProfile(profile);
+        updateLoginStatusText();
+        closePrivacyModal();
+    });
 
+    // 모드 전환
+    function setMode(mode) {
+        const role = getCurrentRole();
+        const teacherOnlyEls = document.querySelectorAll(".teacher-only");
+        const studentOnlyEls = document.querySelectorAll(".student-only");
+
+        if (mode === "teacher" && !(role === "teacher" || role === "admin")) {
+            alert("교사/관리자 계정에서만 교사 모드로 볼 수 있습니다.");
+            teacherModeBtn.classList.remove("active");
+            studentModeBtn.classList.add("active");
+            teacherOnlyEls.forEach(el => el.style.display = "none");
+            studentOnlyEls.forEach(el => el.style.display = "block");
+            return;
+        }
+
+        if (mode === "teacher") {
+            teacherModeBtn.classList.add("active");
+            studentModeBtn.classList.remove("active");
+            teacherOnlyEls.forEach(el => el.style.display = "block");
+            studentOnlyEls.forEach(el => el.style.display = "none");
+            loadAndRenderRecords().catch(console.error);
+        } else {
+            teacherModeBtn.classList.remove("active");
+            studentModeBtn.classList.add("active");
+            teacherOnlyEls.forEach(el => el.style.display = "none");
+            studentOnlyEls.forEach(el => el.style.display = "block");
+        }
+    }
+
+    teacherModeBtn.addEventListener("click", () => setMode("teacher"));
+    studentModeBtn.addEventListener("click", () => setMode("student"));
+
+    // fetchWithUser: x-user-email 헤더 추가
+    async function fetchWithUser(url, options = {}) {
+        const email = getCurrentEmail();
+        const headers = {
+            ...(options.headers || {}),
+            "Content-Type": options.body ? "application/json" : (options.headers || {})["Content-Type"] || undefined,
+            "x-user-email": email || ""
+        };
+        if (!headers["Content-Type"]) delete headers["Content-Type"];
+        const res = await fetch(url, { ...options, headers });
+        return res;
+    }
+
+    // DB 연동
+    async function loadBooksFromDb() {
+        const res = await fetchWithUser("/api/books");
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "도서 조회 실패");
+        return data.books;
+    }
+
+    async function addBookToDb({ class_name, title, author, pages }) {
+        const res = await fetchWithUser("/api/books", {
+            method: "POST",
+            body: JSON.stringify({ class_name, title, author, pages })
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "도서 등록 실패");
+        return data.book;
+    }
+
+    async function loadRecordsFromDb() {
+        const res = await fetchWithUser("/api/records");
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "기록 조회 실패");
+        return data.records;
+    }
+
+    async function saveRecordToDb(payload) {
+        const res = await fetchWithUser("/api/records", {
+            method: "POST",
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "기록 저장 실패");
+        return data;
+    }
+
+    async function deleteRecordInDb(id) {
+        const res = await fetchWithUser(`/api/records/${id}`, {
+            method: "DELETE"
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "기록 삭제 실패");
+        return data.id;
+    }
+
+    async function refreshBookSelect() {
+        try {
+            const books = await loadBooksFromDb();
+            studentBookSelect.innerHTML = `<option value="">책을 선택하세요</option>`;
+            shelf.innerHTML = "";
+            shelfCountText.textContent = books.length;
+
+            if (books.length === 0) {
+                const placeholder = document.createElement("div");
+                placeholder.className = "book-chip";
+                placeholder.innerHTML = `
+                    <div class="book-chip-title">등록된 책이 없습니다</div>
+                    <div class="book-chip-meta">먼저 선생님이 책을 추가해 주세요.</div>
+                `;
+                shelf.appendChild(placeholder);
+                summaryBook.textContent = "-";
+                summaryBookDetail.textContent = "0쪽 · 0반";
+                return;
+            }
+
+            books.forEach(book => {
+                const option = document.createElement("option");
+                option.value = book.id;
+                option.textContent = `${book.title} (${book.class_name})`;
+                studentBookSelect.appendChild(option);
+
+                const div = document.createElement("div");
+                div.className = "book-chip";
+                div.innerHTML = `
+                    <div class="book-chip-title">${book.title}</div>
+                    <div class="book-chip-meta">${book.class_name} · ${book.pages}쪽${book.author ? " · " + book.author : ""}</div>
+                `;
+                shelf.appendChild(div);
+            });
+
+            const current = books[books.length - 1];
+            summaryBook.textContent = current.title;
+            summaryBookDetail.textContent = `${current.pages}쪽 · ${current.class_name}`;
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function loadAndRenderRecords() {
+        try {
+            const records = await loadRecordsFromDb();
+            const books = await loadBooksFromDb();
+            renderRecords(records, books);
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function renderRecords(records, books) {
+        recordTableBody.innerHTML = "";
+
+        let totalToday = 0;
+        const studentSet = new Set();
+        let doneCount = 0;
+
+        records.forEach(rec => {
+            const book = books.find(b => b.id === rec.book_id);
+            const totalPagesBook = book ? book.pages : rec.book_pages || 0;
+            const progress = totalPagesBook ? Math.min(100, Math.round((rec.total_pages / totalPagesBook) * 100)) : 0;
+            const status =
+                progress >= 100 ? "완독"
+                    : progress >= 80 ? "거의 완독"
+                        : "읽는 중";
+
+            totalToday += rec.today_pages;
+            studentSet.add(rec.student_name + "|" + rec.class_name);
+            if (progress >= 100) doneCount++;
+
+            const tr = document.createElement("tr");
+            tr.dataset.recordId = rec.id;
+            tr.innerHTML = `
+                <td>${rec.student_name}</td>
+                <td>${rec.class_name}</td>
+                <td><span class="tag tag-book">${book ? book.title : (rec.book_title || "알 수 없음")}</span></td>
+                <td>${rec.today_pages}쪽</td>
+                <td>${rec.total_pages}쪽</td>
+                <td style="width:140px;">
+                    <div class="progress-bar-shell">
+                        <div class="progress-bar-fill" style="width:${progress}%;"></div>
+                    </div>
+                </td>
+                <td>
+                    <span class="tag ${status === "완독" || status === "거의 완독" ? "tag-done" : "tag-progress"}">
+                        ${status}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-ghost btn-delete" type="button" style="padding:4px 8px;font-size:11px;color:#dc2626;">삭제</button>
+                </td>
+            `;
+            recordTableBody.appendChild(tr);
+        });
+
+        summaryPages.textContent = totalToday;
+        const studentCount = studentSet.size;
+        summaryStudents.textContent = `참여 학생: ${studentCount}명`;
+        const avg = studentCount ? Math.round(totalToday / studentCount) : 0;
+        summaryAvg.textContent = avg;
+        summaryDone.textContent = `완독 학생: ${doneCount}명`;
+        summaryGoal.textContent = `${totalToday} / 목표`;
+        summaryCompare.textContent = `${totalToday}쪽`;
+
+        if (records.length > 0) {
+            const lastRec = records[records.length - 1];
+            const currentBook = books.find(b => b.id === lastRec.book_id);
+            if (currentBook) {
+                const maxTotal = Math.max(
+                    ...records.filter(r => r.book_id === currentBook.id).map(r => r.total_pages)
+                );
+                const progress = currentBook.pages ? Math.min(100, Math.round((maxTotal / currentBook.pages) * 100)) : 0;
+                summaryBookProgress.textContent = `진행률 ${progress}%`;
+            } else {
+                summaryBookProgress.textContent = "진행률 0%";
+            }
+        } else {
+            summaryBookProgress.textContent = "진행률 0%";
+        }
+    }
+
+    recordTableBody.addEventListener("click", async (e) => {
+        const role = getCurrentRole();
+        if (role !== "teacher" && role !== "admin") return;
+        const btn = e.target.closest("button");
+        if (!btn) return;
+        const tr = btn.closest("tr");
+        const recordId = tr?.dataset.recordId;
+        if (!recordId) return;
+
+        if (btn.classList.contains("btn-delete")) {
+            if (!confirm("이 기록을 삭제할까요?")) return;
+            try {
+                await deleteRecordInDb(recordId);
+                await loadAndRenderRecords();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+    });
+
+    bookAddBtn.addEventListener("click", async () => {
+        const role = getCurrentRole();
+        if (role !== "teacher" && role !== "admin") {
+            alert("책 등록은 선생님/관리자만 가능합니다.");
+            return;
+        }
+        const className = classNameInput.value.trim();
+        const title = bookTitleInput.value.trim();
+        const author = bookAuthorInput.value.trim();
+        const pages = parseInt(bookPagesInput.value, 10);
+        if (!className || !title || !pages) {
+            alert("반, 책 제목, 페이지 수를 모두 입력해 주세요.");
+            return;
+        }
+        try {
+            await addBookToDb({ class_name: className, title, author, pages });
+            await refreshBookSelect();
+            summaryBook.textContent = title;
+            summaryBookDetail.textContent = `${pages}쪽 · ${className}`;
+            classNameInput.value = "";
+            bookTitleInput.value = "";
+            bookAuthorInput.value = "";
+            bookPagesInput.value = "";
+        } catch (e) {
+            alert(e.message);
+        }
+    });
+
+    bookResetBtn.addEventListener("click", () => {
+        classNameInput.value = "";
+        bookTitleInput.value = "";
+        bookAuthorInput.value = "";
+        bookPagesInput.value = "";
+    });
+
+    recordSaveBtn.addEventListener("click", async () => {
+        const profile = loadProfile();
+        if (!profile.consent) {
+            alert("개인정보 동의 후 기록을 저장할 수 있습니다.");
+            return;
+        }
+        const studentName = studentNameInput.value.trim();
+        const className = studentClassInput.value.trim();
+        const bookId = studentBookSelect.value;
+        const todayPages = parseInt(todayPagesInput.value, 10) || 0;
+        const lastPage = parseInt(lastPageInput.value, 10) || 0;
+        const targetPages = parseInt(targetPagesInput.value, 10) || 0;
+
+        if (!studentName || !className || !bookId) {
+            alert("이름, 반, 책을 모두 입력/선택해 주세요.");
+            return;
+        }
+        if (todayPages <= 0) {
+            alert("오늘 읽은 페이지 수는 1 이상이어야 합니다.");
+            return;
+        }
+        try {
+            await saveRecordToDb({
+                student_name: studentName,
+                class_name: className,
+                book_id: Number(bookId),
+                today_pages: todayPages,
+                last_page: lastPage,
+                target_pages: targetPages
+            });
+            todayPagesInput.value = "";
+            lastPageInput.value = "";
+            targetPagesInput.value = "";
+            await loadAndRenderRecords();
+        } catch (e) {
+            alert(e.message);
+        }
+    });
+
+    recordResetBtn.addEventListener("click", () => {
+        studentNameInput.value = "";
+        studentClassInput.value = "";
+        studentBookSelect.value = "";
+        todayPagesInput.value = "";
+        lastPageInput.value = "";
+        targetPagesInput.value = "";
+    });
+
+    function handleGoogleResponse(response) {
+        const idToken = response.credential;
+        if (!idToken) return;
+        fetch("/auth/google", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ credential: idToken })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.ok) {
+                    alert("Google 로그인 실패: " + data.error);
+                    return;
+                }
+                const profile = loadProfile();
+                profile.google = {
+                    email: data.user.email,
+                    name: data.user.name,
+                    picture: data.user.picture
+                };
+                profile.role = data.user.role || "student";
+                profile.class_name = data.user.class_name || profile.class_name;
+                if (!profile.name) profile.name = data.user.name;
+                saveProfile(profile);
+
+                updateLoginStatusText();
+                updateAdminButton();
+
+                const role = profile.role;
+                setMode(role === "teacher" || role === "admin" ? "teacher" : "student");
+                refreshBookSelect();
+                if (role === "teacher" || role === "admin") {
+                    loadAndRenderRecords().catch(console.error);
+                }
+            })
+            .catch(err => {
+                console.error("auth/google error", err);
+                alert("Google 로그인 중 오류가 발생했습니다.");
+            });
+    }
+
+    function initGsi() {
+        if (!window.google || !GOOGLE_CLIENT_ID) return;
+        window.google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: handleGoogleResponse
+        });
+        window.google.accounts.id.renderButton(gsiButtonContainer, {
+            type: "standard",
+            theme: "outline",
+            size: "large"
+        });
+    }
+
+    window.onload = () => {
         updateLoginStatusText();
         updateAdminButton();
-
-        const role = profile.role;
+        const role = getCurrentRole();
         setMode(role === "teacher" || role === "admin" ? "teacher" : "student");
+        initGsi();
         refreshBookSelect();
-        if (role === "admin") {
-          refreshAdminClassSelect();
-          loadBooksAndRecords("ALL").catch(console.error);
-        } else if (role === "teacher") {
-          loadBooksAndRecords().catch(console.error);
+        if (role === "teacher" || role === "admin") {
+            loadAndRenderRecords().catch(console.error);
         }
-      })
-      .catch(err => {
-        console.error("auth/google error", err);
-        alert("Google 로그인 중 오류가 발생했습니다.");
-      });
-  }
+    };
 
-  function initGsi() {
-    if (!window.google || !GOOGLE_CLIENT_ID) return;
-    window.google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleGoogleResponse
+    googleLoginUiBtn.addEventListener("click", () => {
+        if (!window.google) {
+            alert("Google 로그인 스크립트를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
+            return;
+        }
+        const realButton = gsiButtonContainer.querySelector("div[role=button]");
+        if (realButton) {
+            realButton.click();
+        } else {
+            alert("Google 로그인 버튼을 초기화하지 못했습니다.");
+        }
     });
-    window.google.accounts.id.renderButton(gsiButtonContainer, {
-      type: "standard",
-      theme: "outline",
-      size: "large"
-    });
-  }
-
-  window.onload = () => {
-    updateLoginStatusText();
-    updateAdminButton();
-    const role = getCurrentRole();
-    setMode(role === "teacher" || role === "admin" ? "teacher" : "student");
-    initGsi();
-    refreshBookSelect();
-    if (role === "admin") {
-      refreshAdminClassSelect();
-      loadBooksAndRecords("ALL").catch(console.error);
-    } else if (role === "teacher") {
-      loadBooksAndRecords().catch(console.error);
-    }
-  };
-
-  googleLoginUiBtn.addEventListener("click", () => {
-    if (!window.google) {
-      alert("Google 로그인 스크립트를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
-      return;
-    }
-    const realButton = gsiButtonContainer.querySelector("div[role=button]");
-    if (realButton) {
-      realButton.click();
-    } else {
-      alert("Google 로그인 버튼을 초기화하지 못했습니다.");
-    }
-  });
 </script>
 </body>
 </html>
