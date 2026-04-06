@@ -161,7 +161,6 @@ app.get("/auth/me", async (req, res) => {
 });
 
 // ===== 교사용 반 설정/수정 API =====
-// 교사/관리자가 자신의 class_name을 설정/변경
 app.post("/teacher/set-class", requireRole(["teacher", "admin"]), async (req, res) => {
   const { class_name } = req.body;
   if (!class_name || !class_name.trim()) {
@@ -247,13 +246,19 @@ app.post("/api/books", requireRole(["teacher", "admin"]), async (req, res) => {
   }
 
   try {
+    const user = req.user;
+
+    if (user.role !== "admin" && user.class_name !== class_name) {
+      return res.status(403).json({ ok: false, error: "자신의 반 도서만 등록할 수 있습니다." });
+    }
+
     const { rows } = await pool.query(
       `
       INSERT INTO books (class_name, title, author, pages)
       VALUES ($1, $2, $3, $4)
       RETURNING id, class_name, title, author, pages
       `,
-      [class_name, title, author || "", pages]
+      [class_name.trim(), title.trim(), (author || "").trim(), pages]
     );
     res.json({ ok: true, book: rows[0] });
   } catch (e) {
@@ -263,7 +268,6 @@ app.post("/api/books", requireRole(["teacher", "admin"]), async (req, res) => {
 });
 
 // ===== 도서 삭제 API =====
-// 교사/관리자만, 자신의 반(class_name) 책만 삭제 가능
 app.delete("/api/books/:id", requireRole(["teacher", "admin"]), async (req, res) => {
   try {
     const user = req.user;
@@ -274,20 +278,20 @@ app.delete("/api/books/:id", requireRole(["teacher", "admin"]), async (req, res)
       return res.status(400).json({ ok: false, error: "먼저 교사용 반을 설정해야 합니다." });
     }
 
-    // 1) 이 책이 내 반 책이 맞는지 확인
     const { rows } = await pool.query(
       "SELECT id FROM books WHERE id = $1 AND class_name = $2",
       [id, className]
     );
+
     if (rows.length === 0) {
       return res.status(404).json({ ok: false, error: "해당 반에서 찾을 수 없는 도서입니다." });
     }
 
-    // 2) 이 책을 사용하는 기록이 있는지 확인
     const used = await pool.query(
       "SELECT COUNT(*)::int AS cnt FROM records WHERE book_id = $1 AND class_name = $2",
       [id, className]
     );
+
     if (used.rows[0].cnt > 0) {
       return res.status(400).json({
         ok: false,
@@ -295,7 +299,6 @@ app.delete("/api/books/:id", requireRole(["teacher", "admin"]), async (req, res)
       });
     }
 
-    // 3) 실제 삭제
     const result = await pool.query(
       "DELETE FROM books WHERE id = $1 AND class_name = $2",
       [id, className]
@@ -322,6 +325,19 @@ app.post("/api/records", requireRole(["student", "teacher", "admin"]), async (re
 
   try {
     const todayStr = new Date().toISOString().slice(0, 10);
+
+    const bookCheck = await pool.query(
+      "SELECT id, class_name FROM books WHERE id = $1",
+      [bookId]
+    );
+
+    if (bookCheck.rows.length === 0) {
+      return res.status(404).json({ ok: false, error: "선택한 도서를 찾을 수 없습니다." });
+    }
+
+    if (bookCheck.rows[0].class_name !== className) {
+      return res.status(400).json({ ok: false, error: "해당 반의 도서만 기록할 수 있습니다." });
+    }
 
     const prev = await pool.query(
       `
@@ -365,14 +381,19 @@ app.post("/api/records", requireRole(["student", "teacher", "admin"]), async (re
 app.get("/api/records", requireRole(["teacher", "admin"]), async (req, res) => {
   try {
     const user = req.user;
-    const className = user.class_name;
+    const requestedClassName = req.query.classname;
 
-    if (!className) {
+    let className = user.class_name;
+
+    if (user.role === "admin" && requestedClassName) {
+      className = requestedClassName === "ALL" ? null : requestedClassName;
+    }
+
+    if (!className && user.role !== "admin") {
       return res.json({ ok: true, records: [] });
     }
 
-    const { rows } = await pool.query(
-      `
+    let query = `
       SELECT
         r.id,
         r.student_name,
@@ -387,12 +408,17 @@ app.get("/api/records", requireRole(["teacher", "admin"]), async (req, res) => {
         b.pages AS book_pages
       FROM records r
       JOIN books b ON r.book_id = b.id
-      WHERE r.class_name = $1
-      ORDER BY r.id ASC
-      `,
-      [className]
-    );
+    `;
+    let params = [];
 
+    if (className) {
+      query += ` WHERE r.class_name = $1 `;
+      params.push(className);
+    }
+
+    query += ` ORDER BY r.id ASC `;
+
+    const { rows } = await pool.query(query, params);
     res.json({ ok: true, records: rows });
   } catch (e) {
     console.error(e);
@@ -400,22 +426,34 @@ app.get("/api/records", requireRole(["teacher", "admin"]), async (req, res) => {
   }
 });
 
-// 기록 삭제 (교사용)
+// ===== 기록 삭제 API =====
 app.delete("/api/records/:id", requireRole(["teacher", "admin"]), async (req, res) => {
   try {
     const user = req.user;
     const className = user.class_name;
     const id = req.params.id;
 
-    const { rowCount } = await pool.query(
-      `
-      DELETE FROM records
-      WHERE id = $1 AND class_name = $2
-      `,
-      [id, className]
-    );
+    let result;
 
-    if (rowCount === 0) {
+    if (user.role === "admin") {
+      result = await pool.query(
+        `
+        DELETE FROM records
+        WHERE id = $1
+        `,
+        [id]
+      );
+    } else {
+      result = await pool.query(
+        `
+        DELETE FROM records
+        WHERE id = $1 AND class_name = $2
+        `,
+        [id, className]
+      );
+    }
+
+    if (result.rowCount === 0) {
       return res.status(404).json({ ok: false, error: "기록을 찾을 수 없습니다." });
     }
 
