@@ -48,7 +48,6 @@
             gap: 12px;
         }
 
-        /* 어드민 버튼 스타일 + 기본은 안 보이게 */
         .admin-btn {
             border-radius: 999px;
             border: 1px solid #fecaca;
@@ -60,7 +59,6 @@
             display: none;
         }
 
-        /* 어드민 전용 섹션 공통 클래스 */
         .admin-only {
             display: none;
         }
@@ -114,7 +112,6 @@
             gap: 16px;
         }
 
-        /* 로그인/동의 카드 */
         .login-card {
             background: var(--card-bg);
             border-radius: var(--radius-lg);
@@ -170,7 +167,6 @@
             background: conic-gradient(from 45deg, #4285F4, #34A853, #FBBC05, #EA4335, #4285F4);
         }
 
-        /* 책 선반 */
         .shelf-card {
             background: var(--card-bg);
             border-radius: var(--radius-lg);
@@ -217,7 +213,7 @@
 
         .book-chip {
             min-width: 120px;
-            max-width: 160px;
+            max-width: 180px;
             flex: 0 0 auto;
             scroll-snap-align: start;
             border-radius: 14px;
@@ -294,6 +290,8 @@
             justify-content: space-between;
             font-size: clamp(10px, 0.5vw + 7px, 12px);
             color: var(--text-sub);
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
         .summary-chip {
@@ -406,6 +404,7 @@
             justify-content: flex-end;
             gap: 8px;
             font-size: 12px;
+            flex-wrap: wrap;
         }
 
         .btn {
@@ -569,7 +568,6 @@
             margin-bottom: 2px;
         }
 
-        /* 모달 */
         .modal-backdrop {
             position: fixed;
             inset: 0;
@@ -710,7 +708,6 @@
             </div>
         </header>
 
-        <!-- 로그인/동의 영역 -->
         <section class="login-card">
             <div>
                 <div class="login-info-title">로그인 및 개인정보 이용 안내</div>
@@ -738,7 +735,6 @@
             </div>
         </section>
 
-        <!-- 책 선반 UI -->
         <section class="shelf-card">
             <div class="shelf-header">
                 <div class="shelf-title">우리 반 온책읽기 책장</div>
@@ -748,7 +744,6 @@
         </section>
 
         <main>
-            <!-- 상단 요약 -->
             <section class="summary-grid">
                 <article class="summary-card">
                     <div class="summary-label">
@@ -795,7 +790,6 @@
                 </article>
             </section>
 
-            <!-- 가운데 영역 -->
             <section class="content-grid">
                 <article class="card admin-only">
                     <div class="card-header">
@@ -810,7 +804,6 @@
                             <label>반 선택</label>
                             <select id="admin-class-select">
                                 <option value="ALL">전체 반</option>
-                                <!-- 필요하면 서버에서 반 목록을 받아와서 여기 채우기 -->
                             </select>
                         </div>
                         <div class="form-group">
@@ -825,7 +818,7 @@
                         Google 계정 role이 <strong>admin</strong>인 사용자만 ADMIN 버튼을 볼 수 있습니다.
                     </div>
                 </article>
-                <!-- 교사용 도서 등록 -->
+
                 <article class="card teacher-only">
                     <div class="card-header">
                         <div class="card-title">
@@ -861,9 +854,23 @@
                             도서 추가
                         </button>
                     </div>
+
+                    <div class="form-grid" style="margin-top:12px;">
+                        <div class="form-group" style="grid-column:1 / -1;">
+                            <label>삭제할 도서 선택</label>
+                            <select id="teacher-book-select">
+                                <option value="">삭제할 도서를 선택하세요</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="btn btn-ghost" type="button" id="book-delete-btn" style="color:#dc2626;">
+                            선택 도서 삭제
+                        </button>
+                    </div>
                 </article>
 
-                <!-- 학생용 입력 -->
                 <article class="card student-only">
                     <div class="card-header">
                         <div class="card-title">
@@ -899,8 +906,7 @@
                         <div class="form-group">
                             <label>나의 목표 쪽수</label>
                             <div class="inline">
-                                <input id="target-pages-input" type="number" min="0" placeholder="예: 150"
-                                    style="flex:1;" />
+                                <input id="target-pages-input" type="number" min="0" placeholder="예: 150" style="flex:1;" />
                                 <span>전체 중 내가 정한 목표</span>
                             </div>
                         </div>
@@ -914,7 +920,7 @@
                         </button>
                     </div>
                 </article>
-                <!-- 독서 랭킹 카드 (교사 전용) -->
+
                 <article class="card teacher-only">
                     <div class="card-header">
                         <div class="card-title">
@@ -942,7 +948,6 @@
                 </article>
             </section>
 
-            <!-- 하단 표: 교사 모드 전용 -->
             <section class="card table-card teacher-only">
                 <div class="card-header">
                     <div class="card-title">
@@ -976,7 +981,6 @@
                 </div>
             </section>
 
-            <!-- 개인정보 처리방침 요약 -->
             <section class="privacy-card">
                 <div class="privacy-title">개인정보 처리방침 (요약)</div>
                 <ul class="privacy-list">
@@ -989,7 +993,6 @@
         </main>
     </div>
 
-    <!-- 개인정보 처리방침 모달 -->
     <div class="modal-backdrop" id="privacy-modal" style="display:none;">
         <div class="modal-dialog">
             <div class="modal-header">
@@ -1044,7 +1047,6 @@
         </div>
     </div>
 
-    <!-- 교사용 반 설정 모달 -->
     <div class="modal-backdrop" id="class-modal" style="display:none;">
         <div class="modal-dialog">
             <div class="modal-header">
@@ -1069,11 +1071,9 @@
     </div>
 
     <script>
-        // 모드 전환 버튼
         const teacherModeBtn = document.getElementById("teacher-mode-btn");
         const studentModeBtn = document.getElementById("student-mode-btn");
 
-        // 로그인/모달 요소
         const loginStatusText = document.getElementById("login-status-text");
         const googleLoginUiBtn = document.getElementById("google-login-ui-btn");
         const openPrivacyModalBtn = document.getElementById("open-privacy-modal-btn");
@@ -1093,13 +1093,14 @@
         const classSaveBtn = document.getElementById("class-save-btn");
         const classModalInput = document.getElementById("class-modal-input");
 
-        // 폼 요소들
         const bookTitleInput = document.getElementById("book-title-input");
         const bookAuthorInput = document.getElementById("book-author-input");
         const bookPagesInput = document.getElementById("book-pages-input");
         const classNameInput = document.getElementById("class-name-input");
         const bookAddBtn = document.getElementById("book-add-btn");
         const bookResetBtn = document.getElementById("book-reset-btn");
+        const teacherBookSelect = document.getElementById("teacher-book-select");
+        const bookDeleteBtn = document.getElementById("book-delete-btn");
 
         const studentNameInput = document.getElementById("student-name-input");
         const studentClassInput = document.getElementById("student-class-input");
@@ -1119,140 +1120,20 @@
         const summaryBook = document.getElementById("summary-book");
         const summaryBookDetail = document.getElementById("summary-book-detail");
         const summaryBookProgress = document.getElementById("summary-book-progress");
+        const summaryCompare = document.getElementById("summary-compare");
+        const summaryGoal = document.getElementById("summary-goal");
 
         const shelf = document.getElementById("book-shelf");
         const shelfCountText = document.getElementById("shelf-count-text");
 
-        // 프로필(localStorage)
         const STORAGE_KEY_PROFILE = "readingDashboardProfile";
 
-        // 요소 참조
         const adminModeBtn = document.getElementById("admin-mode-btn");
         const adminClassSelect = document.getElementById("admin-class-select");
         const adminViewMode = document.getElementById("admin-view-mode");
 
-        // role 읽기 (이미 있는 함수)
-        function getCurrentRole() {
-            const profile = loadProfile();      // 기존 코드 그대로 사용
-            return profile.role || "student";
-        }
-
-        // 어드민 버튼 보이기/숨기기
-        function updateAdminButton() {
-            const role = getCurrentRole();
-            if (role === "admin") {
-                adminModeBtn.style.display = "inline-flex";
-            } else {
-                adminModeBtn.style.display = "none";
-            }
-        }
-
-        // ADMIN 버튼 클릭 시: 어드민 전용 패널 열기 + 전체 반 로딩
-        adminModeBtn.addEventListener("click", () => {
-            const role = getCurrentRole();
-            if (role !== "admin") return;
-
-            // 모드 토글 UI
-            teacherModeBtn.classList.remove("active");
-            studentModeBtn.classList.remove("active");
-
-            // 섹션 표시 제어
-            document.querySelectorAll(".teacher-only").forEach(el => el.style.display = "none");
-            document.querySelectorAll(".student-only").forEach(el => el.style.display = "none");
-            document.querySelectorAll(".admin-only").forEach(el => el.style.display = "block");
-
-            // 전체 반 기준으로 DB에서 불러오기
-            loadBooksAndRecords("ALL").catch(console.error); // 아래 함수 사용
-        });
-
-        // 어드민이 반 선택 바꿀 때마다 DB에서 다시 로드
-        adminClassSelect.addEventListener("change", () => {
-            const role = getCurrentRole();
-            if (role !== "admin") return;
-            const selected = adminClassSelect.value; // "ALL" 또는 "4-2" 등
-            loadBooksAndRecords(selected).catch(console.error);
-        });
-
-        // 어드민 보기 옵션: 통계만 / 테이블
-        adminViewMode.addEventListener("change", () => {
-            const mode = adminViewMode.value;
-            const tableCard = document.querySelector(".table-card");
-            if (!tableCard) return;
-            tableCard.style.display = mode === "stats" ? "none" : "block";
-        });
-
-        // DB에서 책+기록 로드 (관리자가 반을 선택할 수 있도록 selectedClassName 인자 사용)
         let allBooks = [];
         let allRecords = [];
-
-        async function loadBooksAndRecords(selectedClassName) {
-            const books = await loadBooksFromDb();                 // 기존 DB 함수
-            allBooks = books;
-            renderShelf(allBooks);                                 // 기존 함수
-
-            const records = await loadRecordsFromDb(selectedClassName); // 아래 수정된 함수
-            allRecords = records;
-            renderRecords(allRecords, allBooks);                   // 네가 만든 renderRecords
-        }
-
-        // loadRecordsFromDb만 관리자용 인자 받도록 약간 수정
-        async function loadRecordsFromDb(selectedClassName) {
-            const role = getCurrentRole();
-            let className = getCurrentClassName(); // 기존 프로필의 반
-
-            if (role === "admin" && selectedClassName) {
-                className = selectedClassName === "ALL" ? "" : selectedClassName;
-            }
-
-            if (!className && role !== "admin") return [];
-
-            const query = className ? `?classname=${encodeURIComponent(className)}` : "";
-            const res = await fetchWithUser(`/api/records${query}`);
-            const data = await res.json();
-            if (!data.ok) throw new Error(data.error);
-            return data.records;
-        }
-
-        function handleGoogleResponse(response) {
-            const idToken = response.credential;
-            if (!idToken) return;
-            fetch("/auth/google", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ credential: idToken })
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.ok) {
-                        alert("Google 로그인 실패: " + data.error);
-                        return;
-                    }
-                    const profile = loadProfile();
-                    profile.google = {
-                        email: data.user.email,
-                        name: data.user.name,
-                        picture: data.user.picture
-                    };
-                    profile.role = data.user.role || "student";
-                    profile.classname = data.user.classname || profile.classname;
-                    if (!profile.name) profile.name = data.user.name;
-                    saveProfile(profile);
-
-                    updateLoginStatusText();
-                    updateAdminButton(); // 이 줄 추가
-
-                    const role = profile.role;
-                    setMode(role === "teacher" || role === "admin" ? "teacher" : "student");
-                    refreshBookSelect();
-                    if (role === "teacher" || role === "admin") {
-                        loadBooksAndRecords(role === "admin" ? "ALL" : undefined).catch(console.error);
-                    }
-                })
-                .catch(err => {
-                    console.error("auth/google error", err);
-                    alert("Google 로그인 중 오류가 발생했습니다.");
-                });
-        }
 
         function loadProfile() {
             const data = localStorage.getItem(STORAGE_KEY_PROFILE);
@@ -1260,20 +1141,29 @@
                 ? JSON.parse(data)
                 : { name: "", consent: false, google: null, role: "student", class_name: "" };
         }
+
         function saveProfile(profile) {
             localStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(profile));
         }
+
         function getCurrentRole() {
             const profile = loadProfile();
             return profile.role || "student";
         }
+
         function getCurrentEmail() {
             const profile = loadProfile();
             return profile.google?.email || "";
         }
+
         function getCurrentClassName() {
             const profile = loadProfile();
             return profile.class_name || "";
+        }
+
+        function updateAdminButton() {
+            const role = getCurrentRole();
+            adminModeBtn.style.display = role === "admin" ? "inline-flex" : "none";
         }
 
         function updateLoginStatusText() {
@@ -1282,6 +1172,7 @@
             const googleName = profile.google?.name;
             const displayName = profile.name || googleName || "(이름 미입력)";
             const roleLabel = profile.role || "student";
+
             if (profile.consent || profile.google) {
                 loginStatusText.textContent = `${displayName} · ${googleEmail || ""} · 역할: ${roleLabel}`;
             } else {
@@ -1294,89 +1185,21 @@
                 : "현재 반: (미설정 - 상단 '반 설정·수정' 버튼으로 설정하세요)";
         }
 
-        // 개인정보 모달 열기/닫기
-        openPrivacyModalBtn.addEventListener("click", () => {
-            const profile = loadProfile();
-            modalNameInput.value = profile.name || profile.google?.name || "";
-            modalConsentCheckbox.checked = !!profile.consent;
-            privacyModal.style.display = "flex";
-        });
-        function closePrivacyModal() { privacyModal.style.display = "none"; }
-        privacyCloseBtn.addEventListener("click", closePrivacyModal);
-        privacyCancelBtn.addEventListener("click", closePrivacyModal);
-        privacyAcceptBtn.addEventListener("click", () => {
-            const name = modalNameInput.value.trim();
-            const consent = modalConsentCheckbox.checked;
-            if (!consent) {
-                alert("개인정보 처리방침에 동의해야 이용할 수 있습니다.");
-                return;
-            }
-            const profile = loadProfile();
-            profile.name = name;
-            profile.consent = true;
-            saveProfile(profile);
-            updateLoginStatusText();
-            closePrivacyModal();
-        });
+        function closePrivacyModal() {
+            privacyModal.style.display = "none";
+        }
 
-        // 반 설정 모달 열기/닫기
-        teacherClassBtn.addEventListener("click", () => {
-            const profile = loadProfile();
-            classModalInput.value = profile.class_name || "";
-            classModal.style.display = "flex";
-        });
-        function closeClassModal() { classModal.style.display = "none"; }
-        classCloseBtn.addEventListener("click", closeClassModal);
-        classCancelBtn.addEventListener("click", closeClassModal);
+        function closeClassModal() {
+            classModal.style.display = "none";
+        }
 
-        classSaveBtn.addEventListener("click", async () => {
-            const newClass = classModalInput.value.trim();
-            if (!newClass) {
-                alert("반 이름을 입력해주세요.");
-                return;
-            }
-            try {
-                const res = await fetch("/teacher/set-class", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ class_name: newClass })
-                });
-                const data = await res.json();
-                if (!data.ok) {
-                    alert("반 설정 중 오류: " + (data.error || ""));
-                    return;
-                }
-                // users 테이블 업데이트 결과를 프로필에도 반영
-                const profile = loadProfile();
-                profile.class_name = data.user.class_name;
-                if (data.user.role) profile.role = data.user.role;
-                if (data.user.name && !profile.name) profile.name = data.user.name;
-                profile.google = profile.google || {
-                    email: data.user.email,
-                    name: data.user.name,
-                    picture: data.user.picture
-                };
-                saveProfile(profile);
-                updateLoginStatusText();
-                closeClassModal();
-                // 반이 바뀌면 책/기록 다시 로드
-                await refreshBookSelect();
-                if (getCurrentRole() === "teacher" || getCurrentRole() === "admin") {
-                    await loadAndRenderRecords();
-                }
-            } catch (e) {
-                console.error(e);
-                alert("반 설정 중 서버 오류가 발생했습니다.");
-            }
-        });
-
-        // 모드 전환
         function setMode(mode) {
             const role = getCurrentRole();
             const teacherOnlyEls = document.querySelectorAll(".teacher-only");
             const studentOnlyEls = document.querySelectorAll(".student-only");
+            const adminOnlyEls = document.querySelectorAll(".admin-only");
+
+            adminOnlyEls.forEach(el => el.style.display = "none");
 
             if (mode === "teacher" && !(role === "teacher" || role === "admin")) {
                 alert("교사/관리자 계정에서만 교사 모드로 볼 수 있습니다.");
@@ -1404,7 +1227,110 @@
         teacherModeBtn.addEventListener("click", () => setMode("teacher"));
         studentModeBtn.addEventListener("click", () => setMode("student"));
 
-        // fetchWithUser: x-user-email 헤더 추가
+        openPrivacyModalBtn.addEventListener("click", () => {
+            const profile = loadProfile();
+            modalNameInput.value = profile.name || profile.google?.name || "";
+            modalConsentCheckbox.checked = !!profile.consent;
+            privacyModal.style.display = "flex";
+        });
+
+        privacyCloseBtn.addEventListener("click", closePrivacyModal);
+        privacyCancelBtn.addEventListener("click", closePrivacyModal);
+
+        privacyAcceptBtn.addEventListener("click", () => {
+            const name = modalNameInput.value.trim();
+            const consent = modalConsentCheckbox.checked;
+            if (!consent) {
+                alert("개인정보 처리방침에 동의해야 이용할 수 있습니다.");
+                return;
+            }
+            const profile = loadProfile();
+            profile.name = name;
+            profile.consent = true;
+            saveProfile(profile);
+            updateLoginStatusText();
+            closePrivacyModal();
+        });
+
+        teacherClassBtn.addEventListener("click", () => {
+            const profile = loadProfile();
+            classModalInput.value = profile.class_name || "";
+            classModal.style.display = "flex";
+        });
+
+        classCloseBtn.addEventListener("click", closeClassModal);
+        classCancelBtn.addEventListener("click", closeClassModal);
+
+        classSaveBtn.addEventListener("click", async () => {
+            const newClass = classModalInput.value.trim();
+            if (!newClass) {
+                alert("반 이름을 입력해주세요.");
+                return;
+            }
+            try {
+                const res = await fetch("/teacher/set-class", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ class_name: newClass })
+                });
+                const data = await res.json();
+                if (!data.ok) {
+                    alert("반 설정 중 오류: " + (data.error || ""));
+                    return;
+                }
+
+                const profile = loadProfile();
+                profile.class_name = data.user.class_name;
+                if (data.user.role) profile.role = data.user.role;
+                if (data.user.name && !profile.name) profile.name = data.user.name;
+                profile.google = profile.google || {
+                    email: data.user.email,
+                    name: data.user.name,
+                    picture: data.user.picture
+                };
+                saveProfile(profile);
+                updateLoginStatusText();
+                closeClassModal();
+                await refreshBookSelect();
+                if (getCurrentRole() === "teacher" || getCurrentRole() === "admin") {
+                    await loadAndRenderRecords();
+                }
+            } catch (e) {
+                console.error(e);
+                alert("반 설정 중 서버 오류가 발생했습니다.");
+            }
+        });
+
+        adminModeBtn.addEventListener("click", () => {
+            const role = getCurrentRole();
+            if (role !== "admin") return;
+
+            teacherModeBtn.classList.remove("active");
+            studentModeBtn.classList.remove("active");
+
+            document.querySelectorAll(".teacher-only").forEach(el => el.style.display = "none");
+            document.querySelectorAll(".student-only").forEach(el => el.style.display = "none");
+            document.querySelectorAll(".admin-only").forEach(el => el.style.display = "block");
+
+            loadBooksAndRecords("ALL").catch(console.error);
+        });
+
+        adminClassSelect.addEventListener("change", () => {
+            const role = getCurrentRole();
+            if (role !== "admin") return;
+            const selected = adminClassSelect.value;
+            loadBooksAndRecords(selected).catch(console.error);
+        });
+
+        adminViewMode.addEventListener("change", () => {
+            const mode = adminViewMode.value;
+            const tableCard = document.querySelector(".table-card");
+            if (!tableCard) return;
+            tableCard.style.display = mode === "stats" ? "none" : "block";
+        });
+
         async function fetchWithUser(url, options = {}) {
             const email = getCurrentEmail();
             const headers = {
@@ -1413,11 +1339,9 @@
                 "x-user-email": email || ""
             };
             if (!headers["Content-Type"]) delete headers["Content-Type"];
-            const res = await fetch(url, { ...options, headers });
-            return res;
+            return await fetch(url, { ...options, headers });
         }
 
-        // DB 연동
         async function loadBooksFromDb() {
             const res = await fetchWithUser("/api/books");
             const data = await res.json();
@@ -1435,8 +1359,27 @@
             return data.book;
         }
 
-        async function loadRecordsFromDb() {
-            const res = await fetchWithUser("/api/records");
+        async function deleteBookInDb(id) {
+            const res = await fetchWithUser(`/api/books/${id}`, {
+                method: "DELETE"
+            });
+            const data = await res.json();
+            if (!data.ok) throw new Error(data.error || "도서 삭제 실패");
+            return data.id;
+        }
+
+        async function loadRecordsFromDb(selectedClassName) {
+            const role = getCurrentRole();
+            let className = getCurrentClassName();
+
+            if (role === "admin" && selectedClassName) {
+                className = selectedClassName === "ALL" ? "" : selectedClassName;
+            }
+
+            if (!className && role !== "admin") return [];
+
+            const query = className ? `?classname=${encodeURIComponent(className)}` : "";
+            const res = await fetchWithUser(`/api/records${query}`);
             const data = await res.json();
             if (!data.ok) throw new Error(data.error || "기록 조회 실패");
             return data.records;
@@ -1461,13 +1404,69 @@
             return data.id;
         }
 
-        // 책 셀렉트/선반
+        function updateAdminClassOptions(books = [], records = []) {
+            const classes = new Set();
+            books.forEach(book => {
+                if (book.class_name) classes.add(book.class_name);
+            });
+            records.forEach(rec => {
+                if (rec.class_name) classes.add(rec.class_name);
+            });
+
+            const currentValue = adminClassSelect.value || "ALL";
+            adminClassSelect.innerHTML = '<option value="ALL">전체 반</option>';
+            Array.from(classes).sort().forEach(className => {
+                const option = document.createElement("option");
+                option.value = className;
+                option.textContent = className;
+                adminClassSelect.appendChild(option);
+            });
+
+            if ([...adminClassSelect.options].some(opt => opt.value === currentValue)) {
+                adminClassSelect.value = currentValue;
+            }
+        }
+
+        function renderShelf(books) {
+            shelf.innerHTML = "";
+            shelfCountText.textContent = `등록된 도서 ${books.length}권`;
+
+            if (books.length === 0) {
+                const placeholder = document.createElement("div");
+                placeholder.className = "book-chip";
+                placeholder.innerHTML = `
+                    <div class="book-chip-title">도서를 등록해 보세요</div>
+                    <div class="book-chip-meta">교사 모드에서 도서 등록 시 여기에 책이 나타납니다</div>
+                `;
+                shelf.appendChild(placeholder);
+                summaryBook.textContent = "미지정";
+                summaryBookDetail.textContent = "총 0쪽 · 목표 일수 0일";
+                summaryBookProgress.textContent = "진행률 0%";
+                return;
+            }
+
+            books.forEach(book => {
+                const div = document.createElement("div");
+                div.className = "book-chip";
+                div.innerHTML = `
+                    <div class="book-chip-title">${book.title}</div>
+                    <div class="book-chip-meta">${book.class_name} · ${book.pages}쪽${book.author ? " · " + book.author : ""}</div>
+                `;
+                shelf.appendChild(div);
+            });
+
+            const current = books[books.length - 1];
+            summaryBook.textContent = current.title;
+            summaryBookDetail.textContent = `총 ${current.pages}쪽 · ${current.class_name}`;
+        }
+
         async function refreshBookSelect() {
             try {
                 const books = await loadBooksFromDb();
+                allBooks = books;
+
                 studentBookSelect.innerHTML = '<option value="">온책읽기 도서를 선택하세요</option>';
-                shelf.innerHTML = "";
-                shelfCountText.textContent = `등록된 도서 ${books.length}권`;
+                teacherBookSelect.innerHTML = '<option value="">삭제할 도서를 선택하세요</option>';
 
                 books.forEach(book => {
                     const option = document.createElement("option");
@@ -1475,39 +1474,38 @@
                     option.textContent = `${book.title} (${book.class_name})`;
                     studentBookSelect.appendChild(option);
 
-                    const div = document.createElement("div");
-                    div.className = "book-chip";
-                    div.innerHTML = `
-            <div class="book-chip-title">${book.title}</div>
-            <div class="book-chip-meta">${book.class_name} · ${book.pages}쪽${book.author ? " · " + book.author : ""}</div>
-          `;
-                    shelf.appendChild(div);
+                    const teacherOption = document.createElement("option");
+                    teacherOption.value = book.id;
+                    teacherOption.textContent = `${book.title} (${book.class_name} · ${book.pages}쪽)`;
+                    teacherBookSelect.appendChild(teacherOption);
                 });
 
-                if (books.length === 0) {
-                    const placeholder = document.createElement("div");
-                    placeholder.className = "book-chip";
-                    placeholder.innerHTML = `
-            <div class="book-chip-title">도서를 등록해 보세요</div>
-            <div class="book-chip-meta">교사 모드에서 도서 등록 시 여기에 책이 나타납니다</div>
-          `;
-                    shelf.appendChild(placeholder);
-                    summaryBook.textContent = "미지정";
-                    summaryBookDetail.textContent = "총 0쪽 · 목표 일수 0일";
-                } else {
-                    const current = books[books.length - 1];
-                    summaryBook.textContent = current.title;
-                    summaryBookDetail.textContent = `총 ${current.pages}쪽 · ${current.class_name}`;
-                }
+                renderShelf(books);
+                updateAdminClassOptions(allBooks, allRecords);
             } catch (e) {
                 console.error(e);
             }
         }
 
+        async function loadBooksAndRecords(selectedClassName) {
+            const books = await loadBooksFromDb();
+            allBooks = books;
+            renderShelf(allBooks);
+
+            const records = await loadRecordsFromDb(selectedClassName);
+            allRecords = records;
+            updateAdminClassOptions(allBooks, allRecords);
+            renderRecords(allRecords, allBooks);
+        }
+
         async function loadAndRenderRecords() {
             try {
-                const records = await loadRecordsFromDb();
+                const selectedClass = getCurrentRole() === "admin" ? adminClassSelect.value : undefined;
+                const records = await loadRecordsFromDb(selectedClass);
                 const books = await loadBooksFromDb();
+                allRecords = records;
+                allBooks = books;
+                updateAdminClassOptions(allBooks, allRecords);
                 renderRecords(records, books);
             } catch (e) {
                 console.error(e);
@@ -1522,9 +1520,11 @@
             let doneCount = 0;
 
             records.forEach(rec => {
-                const book = books.find(b => b.id === rec.book_id);
-                const totalPagesBook = book ? book.pages : rec.book_pages || 0;
-                const progress = totalPagesBook ? Math.min(100, Math.round((rec.total_pages / totalPagesBook) * 100)) : 0;
+                const book = books.find(b => Number(b.id) === Number(rec.book_id));
+                const totalPagesBook = book ? Number(book.pages) : Number(rec.book_pages || 0);
+                const totalPages = Number(rec.total_pages || 0);
+                const todayPages = Number(rec.today_pages || 0);
+                const progress = totalPagesBook ? Math.min(100, Math.round((totalPages / totalPagesBook) * 100)) : 0;
                 const status =
                     progress >= 100
                         ? "완독"
@@ -1532,52 +1532,52 @@
                             ? "거의 완독"
                             : "읽는 중";
 
-                totalToday += rec.today_pages;
-                studentSet.add(rec.student_name + "|" + rec.class_name);
+                totalToday += todayPages;
+                studentSet.add(`${rec.student_name}|${rec.class_name}`);
                 if (progress >= 100) doneCount++;
 
                 const tr = document.createElement("tr");
                 tr.dataset.recordId = rec.id;
 
                 tr.innerHTML = `
-      <td>${rec.student_name}</td>
-      <td>${rec.class_name}</td>
-      <td><span class="tag tag-book">${book ? book.title : (rec.book_title || "알 수 없음")}</span></td>
-      <td>${rec.today_pages}쪽</td>
-      <td>${rec.total_pages}쪽</td>
-      <td style="width:140px;">
-        <div class="progress-bar-shell">
-          <div class="progress-bar-fill" style="width:${progress}%;"></div>
-        </div>
-      </td>
-      <td>
-        <span class="tag ${status === "완독" || status === "거의 완독" ? "tag-done" : "tag-progress"}">
-          ${status}
-        </span>
-      </td>
-      <td>
-        <button class="btn btn-ghost btn-delete" type="button" style="padding:4px 8px;font-size:11px;color:#dc2626;">삭제</button>
-      </td>
-    `;
+                    <td>${rec.student_name}</td>
+                    <td>${rec.class_name}</td>
+                    <td><span class="tag tag-book">${book ? book.title : (rec.book_title || "알 수 없음")}</span></td>
+                    <td>${todayPages}쪽</td>
+                    <td>${totalPages}쪽</td>
+                    <td style="width:140px;">
+                        <div class="progress-bar-shell">
+                            <div class="progress-bar-fill" style="width:${progress}%;"></div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="tag ${status === "완독" || status === "거의 완독" ? "tag-done" : "tag-progress"}">
+                            ${status}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-ghost btn-delete" type="button" style="padding:4px 8px;font-size:11px;color:#dc2626;">삭제</button>
+                    </td>
+                `;
                 recordTableBody.appendChild(tr);
             });
 
-            // 요약 카드 갱신
             summaryPages.textContent = totalToday;
             const studentCount = studentSet.size;
             summaryStudents.textContent = `참여 학생: ${studentCount}명`;
             const avg = studentCount ? Math.round(totalToday / studentCount) : 0;
             summaryAvg.textContent = avg;
             summaryDone.textContent = `완독 학생: ${doneCount}명`;
+            summaryCompare.textContent = `기록 ${records.length}건`;
+            summaryGoal.textContent = `참여 ${studentCount}명`;
 
             if (records.length > 0) {
                 const lastRec = records[records.length - 1];
-                const currentBook = books.find(b => b.id === lastRec.book_id);
+                const currentBook = books.find(b => Number(b.id) === Number(lastRec.book_id));
                 if (currentBook) {
-                    const maxTotal = Math.max(
-                        ...records.filter(r => r.book_id === currentBook.id).map(r => r.total_pages)
-                    );
-                    const progress = currentBook.pages ? Math.min(100, Math.round((maxTotal / currentBook.pages) * 100)) : 0;
+                    const sameBookRecords = records.filter(r => Number(r.book_id) === Number(currentBook.id));
+                    const maxTotal = Math.max(...sameBookRecords.map(r => Number(r.total_pages || 0)), 0);
+                    const progress = currentBook.pages ? Math.min(100, Math.round((maxTotal / Number(currentBook.pages)) * 100)) : 0;
                     summaryBookProgress.textContent = `진행률 ${progress}%`;
                 } else {
                     summaryBookProgress.textContent = "진행률 0%";
@@ -1586,46 +1586,44 @@
                 summaryBookProgress.textContent = "진행률 0%";
             }
 
-            // --- 여기부터 랭킹 계산/렌더 ---
             const bestByStudent = new Map();
             records.forEach(rec => {
                 const key = rec.student_name + "|" + rec.class_name;
                 const prev = bestByStudent.get(key);
-                if (!prev || rec.total_pages > prev.total_pages) {
+                if (!prev || Number(rec.total_pages || 0) > Number(prev.total_pages || 0)) {
                     bestByStudent.set(key, rec);
                 }
             });
 
             const ranking = Array.from(bestByStudent.values())
-                .sort((a, b) => b.total_pages - a.total_pages)
-                .slice(0, 5); // 상위 5명
+                .sort((a, b) => Number(b.total_pages || 0) - Number(a.total_pages || 0))
+                .slice(0, 5);
 
             rankingBody.innerHTML = "";
             if (ranking.length === 0) {
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
-      <td colspan="5" style="text-align:center;color:#9ca3af;font-size:12px;">
-        아직 랭킹을 계산할 기록이 없습니다.
-      </td>
-    `;
+                    <td colspan="5" style="text-align:center;color:#9ca3af;font-size:12px;">
+                        아직 랭킹을 계산할 기록이 없습니다.
+                    </td>
+                `;
                 rankingBody.appendChild(tr);
             } else {
                 ranking.forEach((rec, idx) => {
-                    const book = books.find(b => b.id === rec.book_id);
+                    const book = books.find(b => Number(b.id) === Number(rec.book_id));
                     const tr = document.createElement("tr");
                     tr.innerHTML = `
-        <td>${idx + 1}</td>
-        <td>${rec.student_name}</td>
-        <td>${rec.class_name}</td>
-        <td>${book ? book.title : (rec.book_title || "알 수 없음")}</td>
-        <td>${rec.total_pages}쪽</td>
-      `;
+                        <td>${idx + 1}</td>
+                        <td>${rec.student_name}</td>
+                        <td>${rec.class_name}</td>
+                        <td>${book ? book.title : (rec.book_title || "알 수 없음")}</td>
+                        <td>${rec.total_pages}쪽</td>
+                    `;
                     rankingBody.appendChild(tr);
                 });
             }
         }
 
-        // 교사용: 삭제 버튼
         recordTableBody.addEventListener("click", async (e) => {
             const role = getCurrentRole();
             if (!(role === "teacher" || role === "admin")) return;
@@ -1647,7 +1645,6 @@
             }
         });
 
-        // 도서 등록 버튼
         bookAddBtn.addEventListener("click", async () => {
             try {
                 const className = classNameInput.value.trim() || getCurrentClassName();
@@ -1672,45 +1669,32 @@
             }
         });
 
-        async function SetRole(email, secret, role, className) {
-            try {
-                const res = await fetch("/admin/set-role", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        email,
-                        role,               // "student" | "teacher" | "admin"
-                        class_name: className || null,
-                        secret              // ADMIN_SECRET 값
-                    })
-                });
-                const data = await res.json();
-                console.log("SetRole result:", data);
-
-                if (!data.ok) {
-                    alert("SetRole 오류: " + (data.error || "알 수 없는 오류"));
-                    return;
-                }
-
-                // 로컬 프로필도 같이 업데이트
-                const profile = loadProfile();
-                profile.role = data.user.role;
-                profile.class_name = data.user.class_name || "";
-                if (!profile.google) {
-                    profile.google = {
-                        email: data.user.email,
-                        name: data.user.name,
-                        picture: data.user.picture
-                    };
-                }
-                saveProfile(profile);
-                updateLoginStatusText();
-                alert(`역할이 ${data.user.role} / 반이 ${data.user.class_name || "(없음)"} 로 변경되었습니다.`);
-            } catch (e) {
-                console.error(e);
-                alert("SetRole 호출 중 서버 오류");
+        bookDeleteBtn.addEventListener("click", async () => {
+            const role = getCurrentRole();
+            if (!(role === "teacher" || role === "admin")) {
+                alert("교사/관리자만 도서를 삭제할 수 있습니다.");
+                return;
             }
-        }
+
+            const bookId = teacherBookSelect.value;
+            if (!bookId) {
+                alert("삭제할 도서를 먼저 선택해주세요.");
+                return;
+            }
+
+            const selectedText = teacherBookSelect.options[teacherBookSelect.selectedIndex]?.textContent || "선택한 도서";
+            if (!confirm(`${selectedText} 도서를 삭제할까요?`)) return;
+
+            try {
+                await deleteBookInDb(bookId);
+                await refreshBookSelect();
+                await loadAndRenderRecords();
+                teacherBookSelect.value = "";
+                alert("도서가 삭제되었습니다.");
+            } catch (err) {
+                alert("도서 삭제 중 오류: " + (err.message || ""));
+            }
+        });
 
         bookResetBtn.addEventListener("click", () => {
             classNameInput.value = "";
@@ -1719,7 +1703,6 @@
             bookPagesInput.value = "";
         });
 
-        // 학생 기록 저장
         recordSaveBtn.addEventListener("click", async () => {
             const profile = loadProfile();
             if (!profile.consent) {
@@ -1772,12 +1755,10 @@
             targetPagesInput.value = "";
         });
 
-        // 구글 로그인: 리디렉션 방식
         googleLoginUiBtn.addEventListener("click", () => {
             window.location.href = "/auth/google/login";
         });
 
-        // 로그인 상태/역할 초기화
         async function initAuthAndData() {
             try {
                 const res = await fetch("/auth/me");
@@ -1794,6 +1775,7 @@
                     if (!profile.name && data.user.name) profile.name = data.user.name;
                     saveProfile(profile);
                     updateLoginStatusText();
+                    updateAdminButton();
 
                     const role = profile.role;
                     setMode(role === "teacher" || role === "admin" ? "teacher" : "student");
@@ -1804,15 +1786,19 @@
                 } else {
                     setMode("student");
                     updateLoginStatusText();
+                    updateAdminButton();
+                    await refreshBookSelect();
                 }
             } catch (e) {
                 console.error(e);
                 setMode("student");
+                updateAdminButton();
             }
         }
 
         window.onload = () => {
             updateLoginStatusText();
+            updateAdminButton();
             initAuthAndData();
         };
     </script>
