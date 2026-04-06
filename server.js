@@ -262,6 +262,56 @@ app.post("/api/books", requireRole(["teacher", "admin"]), async (req, res) => {
   }
 });
 
+// ===== 도서 삭제 API =====
+// 교사/관리자만, 자신의 반(class_name) 책만 삭제 가능
+app.delete("/api/books/:id", requireRole(["teacher", "admin"]), async (req, res) => {
+  try {
+    const user = req.user;
+    const className = user.class_name;
+    const id = req.params.id;
+
+    if (!className) {
+      return res.status(400).json({ ok: false, error: "먼저 교사용 반을 설정해야 합니다." });
+    }
+
+    // 1) 이 책이 내 반 책이 맞는지 확인
+    const { rows } = await pool.query(
+      "SELECT id FROM books WHERE id = $1 AND class_name = $2",
+      [id, className]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ ok: false, error: "해당 반에서 찾을 수 없는 도서입니다." });
+    }
+
+    // 2) 이 책을 사용하는 기록이 있는지 확인
+    const used = await pool.query(
+      "SELECT COUNT(*)::int AS cnt FROM records WHERE book_id = $1 AND class_name = $2",
+      [id, className]
+    );
+    if (used.rows[0].cnt > 0) {
+      return res.status(400).json({
+        ok: false,
+        error: "이미 학생 기록에 사용 중인 도서입니다. 기록을 먼저 정리한 뒤 삭제해주세요."
+      });
+    }
+
+    // 3) 실제 삭제
+    const result = await pool.query(
+      "DELETE FROM books WHERE id = $1 AND class_name = $2",
+      [id, className]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ ok: false, error: "도서를 찾을 수 없습니다." });
+    }
+
+    res.json({ ok: true, id });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ ok: false, error: "서버 오류" });
+  }
+});
+
 // ===== 기록 API =====
 app.post("/api/records", requireRole(["student", "teacher", "admin"]), async (req, res) => {
   const { studentName, className, bookId, todayPages, lastPage, targetPages } = req.body;
