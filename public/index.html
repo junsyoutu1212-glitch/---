@@ -290,8 +290,8 @@
             justify-content: space-between;
             font-size: clamp(10px, 0.5vw + 7px, 12px);
             color: var(--text-sub);
-            flex-wrap: wrap;
             gap: 8px;
+            flex-wrap: wrap;
         }
 
         .summary-chip {
@@ -372,6 +372,7 @@
 
         input[type="text"],
         input[type="number"],
+        input[type="password"],
         select {
             border-radius: 9px;
             border: 1px solid var(--border);
@@ -384,6 +385,7 @@
 
         input[type="text"]:focus,
         input[type="number"]:focus,
+        input[type="password"]:focus,
         select:focus {
             border-color: var(--primary);
             box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.2);
@@ -403,6 +405,7 @@
             display: flex;
             justify-content: flex-end;
             gap: 8px;
+            font-size: 12px;
             flex-wrap: wrap;
         }
 
@@ -711,7 +714,7 @@
             <div>
                 <div class="login-info-title">로그인 및 개인정보 이용 안내</div>
                 <div class="login-info-desc">
-                    이 서비스는 학생의 이름(또는 번호)·반·읽은 쪽수만 사용합니다.
+                    이 서비스는 학생의 이름(또는 번호), 반, 읽은 쪽수만 사용합니다.
                 </div>
                 <div style="margin-top:4px;font-size:12px;color:var(--text-sub);" id="class-info-text">
                     현재 반: (미설정)
@@ -796,8 +799,9 @@
                             <span class="card-badge" style="background:#fee2e2;color:#b91c1c;">ADMIN</span>
                             관리자 패널
                         </div>
-                        <div class="card-desc">전체 반의 독서 기록을 조회할 수 있습니다.</div>
+                        <div class="card-desc">전체 반 조회 및 사용자 권한을 설정할 수 있습니다.</div>
                     </div>
+
                     <div class="form-grid">
                         <div class="form-group">
                             <label>반 선택</label>
@@ -812,6 +816,47 @@
                                 <option value="stats">통계만 보기</option>
                             </select>
                         </div>
+                    </div>
+
+                    <hr style="margin:14px 0;border:none;border-top:1px solid #e5e7eb;" />
+
+                    <div class="card-header" style="margin-bottom:8px;">
+                        <div class="card-title">
+                            사용자 권한 변경
+                            <span class="card-badge" style="background:#eef2ff;color:#4b6bfb;">SetRole</span>
+                        </div>
+                        <div class="card-desc">student / teacher / admin 권한과 반을 설정합니다.</div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>사용자 이메일</label>
+                            <input id="admin-email-input" type="text" placeholder="예: user@gmail.com" />
+                        </div>
+                        <div class="form-group">
+                            <label>권한</label>
+                            <select id="admin-role-select">
+                                <option value="student">student</option>
+                                <option value="teacher">teacher</option>
+                                <option value="admin">admin</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>반 이름</label>
+                            <input id="admin-classname-input" type="text" placeholder="예: 4-2 (student면 비워도 됨)" />
+                        </div>
+                        <div class="form-group">
+                            <label>관리자 비밀키</label>
+                            <input id="admin-secret-input" type="password" placeholder="ADMIN_SECRET 입력" />
+                        </div>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="btn btn-ghost" type="button" id="admin-setrole-reset-btn">초기화</button>
+                        <button class="btn btn-primary" type="button" id="admin-setrole-btn">
+                            <span class="dot"></span>
+                            권한 변경
+                        </button>
                     </div>
                 </article>
 
@@ -923,9 +968,7 @@
                             독서 랭킹
                             <span class="card-badge" style="background:#fee2e2;color:#b91c1c;">Top 5</span>
                         </div>
-                        <div class="card-desc">
-                            누적 읽은 쪽수가 많은 순으로 학생을 보여줍니다.
-                        </div>
+                        <div class="card-desc">누적 읽은 쪽수가 많은 순으로 학생을 보여줍니다.</div>
                     </div>
                     <div class="table-wrapper">
                         <table>
@@ -1069,6 +1112,7 @@
     <script>
         const teacherModeBtn = document.getElementById("teacher-mode-btn");
         const studentModeBtn = document.getElementById("student-mode-btn");
+        const adminModeBtn = document.getElementById("admin-mode-btn");
 
         const loginStatusText = document.getElementById("login-status-text");
         const googleLoginUiBtn = document.getElementById("google-login-ui-btn");
@@ -1122,9 +1166,14 @@
         const shelf = document.getElementById("book-shelf");
         const shelfCountText = document.getElementById("shelf-count-text");
 
-        const adminModeBtn = document.getElementById("admin-mode-btn");
         const adminClassSelect = document.getElementById("admin-class-select");
         const adminViewMode = document.getElementById("admin-view-mode");
+        const adminEmailInput = document.getElementById("admin-email-input");
+        const adminRoleSelect = document.getElementById("admin-role-select");
+        const adminClassnameInput = document.getElementById("admin-classname-input");
+        const adminSecretInput = document.getElementById("admin-secret-input");
+        const adminSetroleBtn = document.getElementById("admin-setrole-btn");
+        const adminSetroleResetBtn = document.getElementById("admin-setrole-reset-btn");
 
         const STORAGE_KEY_PROFILE = "readingDashboardProfile";
 
@@ -1380,6 +1429,43 @@
             const data = await res.json();
             if (!data.ok) throw new Error(data.error || "기록 삭제 실패");
             return data.id;
+        }
+
+        async function SetRole(email, secret, role, className) {
+            try {
+                const res = await fetch("/admin/set-role", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        email,
+                        role,
+                        class_name: className || null,
+                        secret
+                    })
+                });
+
+                const data = await res.json();
+                console.log("SetRole result:", data);
+
+                if (!data.ok) {
+                    alert("SetRole 실패: " + (data.error || ""));
+                    return;
+                }
+
+                const profile = loadProfile();
+                if (profile.google && profile.google.email === data.user.email) {
+                    profile.role = data.user.role;
+                    profile.class_name = data.user.class_name || "";
+                    saveProfile(profile);
+                    updateLoginStatusText();
+                    updateAdminButton();
+                }
+
+                alert(`${data.user.email} → ${data.user.role}${data.user.class_name ? " / " + data.user.class_name : ""} 로 변경되었습니다.`);
+            } catch (e) {
+                console.error(e);
+                alert("SetRole 호출 중 서버 오류");
+            }
         }
 
         function updateAdminClassOptions(records, books) {
@@ -1641,6 +1727,28 @@
             } catch (err) {
                 alert(err.message || "도서 삭제 중 오류가 발생했습니다.");
             }
+        });
+
+        adminSetroleBtn.addEventListener("click", async () => {
+            const email = adminEmailInput.value.trim();
+            const role = adminRoleSelect.value;
+            const className = adminClassnameInput.value.trim();
+            const secret = adminSecretInput.value.trim();
+
+            if (!email || !role || !secret) {
+                alert("이메일, 권한, 비밀키는 필수입니다.");
+                return;
+            }
+
+            await SetRole(email, secret, role, className || null);
+            await loadAndRenderRecords("ALL");
+        });
+
+        adminSetroleResetBtn.addEventListener("click", () => {
+            adminEmailInput.value = "";
+            adminRoleSelect.value = "student";
+            adminClassnameInput.value = "";
+            adminSecretInput.value = "";
         });
 
         bookResetBtn.addEventListener("click", () => {
