@@ -9,210 +9,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet" />
     <style>
         :root {
-            color-scheme: light dark;
-
             --bg: #f5f7fb;
-            --bg-grad-1: #eef2ff;
-            --bg-grad-2: #f9fafb;
             --card-bg: #ffffff;
-            --card-bg-soft: #f9fafb;
-
             --primary: #4b6bfb;
-            --primary-2: #6366f1;
             --primary-soft: #e4ebff;
             --accent: #ffb020;
-
             --text-main: #111827;
             --text-sub: #6b7280;
-            --text-faint: #9ca3af;
-
             --border: #e5e7eb;
-            --border-soft: #edf0f5;
-
-            --thead-bg: #f3f4ff;
-            --row-alt: #f9fafb;
-
-            --chip-green-bg: #ecfdf3;
-            --chip-green-text: #16a34a;
-
-            --tag-book-bg: #eef2ff;
-            --tag-book-text: #4b6bfb;
-
-            --tag-done-bg: #ecfdf3;
-            --tag-done-text: #15803d;
-
-            --tag-progress-bg: #fef3c7;
-            --tag-progress-text: #b45309;
-
-            --danger-bg: #fee2e2;
-            --danger-text: #b91c1c;
-            --danger-border: #fecaca;
-
-            --info-bg: #e0f2fe;
-            --info-text: #0369a1;
-
-            --warning-red: #dc2626;
-            --req: #ef4444;
-
-            --google-btn-bg: #ffffff;
-            --google-btn-border: #d1d5db;
-
-            --role-toggle-bg: #e5e7eb;
-            --role-active-bg: #ffffff;
-            --role-active-shadow: 0 6px 16px rgba(148, 163, 184, 0.45);
-
-            --progress-track: #e5e7eb;
-            --progress-fill-1: #4b6bfb;
-            --progress-fill-2: #22c55e;
-
-            --modal-backdrop: rgba(15, 23, 42, 0.45);
-
-            --shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.08);
-            --shadow-sm: 0 3px 6px rgba(15, 23, 42, 0.08);
-            --shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.4);
-
             --radius-lg: 18px;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root:not([data-theme="light"]) {
-                --bg: #0b1020;
-                --bg-grad-1: #111827;
-                --bg-grad-2: #0b1020;
-                --card-bg: #111827;
-                --card-bg-soft: #0f172a;
-
-                --primary: #8ea2ff;
-                --primary-2: #6f7cff;
-                --primary-soft: #1d294d;
-                --accent: #ffbf47;
-
-                --text-main: #f3f4f6;
-                --text-sub: #9ca3af;
-                --text-faint: #94a3b8;
-
-                --border: #243042;
-                --border-soft: #1f2937;
-
-                --thead-bg: #172033;
-                --row-alt: #0f172a;
-
-                --chip-green-bg: #123226;
-                --chip-green-text: #86efac;
-
-                --tag-book-bg: #1b284f;
-                --tag-book-text: #a5b4fc;
-
-                --tag-done-bg: #123226;
-                --tag-done-text: #86efac;
-
-                --tag-progress-bg: #3a2f12;
-                --tag-progress-text: #fcd34d;
-
-                --danger-bg: #3a1d24;
-                --danger-text: #fca5a5;
-                --danger-border: #7f1d1d;
-
-                --info-bg: #10273d;
-                --info-text: #7dd3fc;
-
-                --warning-red: #f87171;
-                --req: #f87171;
-
-                --google-btn-bg: #0f172a;
-                --google-btn-border: #334155;
-
-                --role-toggle-bg: #1f2937;
-                --role-active-bg: #0f172a;
-                --role-active-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
-
-                --progress-track: #243042;
-                --progress-fill-1: #8ea2ff;
-                --progress-fill-2: #34d399;
-
-                --modal-backdrop: rgba(2, 6, 23, 0.68);
-
-                --shadow-soft: 0 12px 30px rgba(0, 0, 0, 0.35);
-                --shadow-sm: 0 3px 6px rgba(0, 0, 0, 0.3);
-                --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.52);
-            }
-        }
-
-        :root[data-theme="light"] {
-            color-scheme: light;
-        }
-
-        :root[data-theme="dark"] {
-            color-scheme: dark;
-
-            --bg: #0b1020;
-            --bg-grad-1: #111827;
-            --bg-grad-2: #0b1020;
-            --card-bg: #111827;
-            --card-bg-soft: #0f172a;
-
-            --primary: #8ea2ff;
-            --primary-2: #6f7cff;
-            --primary-soft: #1d294d;
-            --accent: #ffbf47;
-
-            --text-main: #f3f4f6;
-            --text-sub: #9ca3af;
-            --text-faint: #94a3b8;
-
-            --border: #243042;
-            --border-soft: #1f2937;
-
-            --thead-bg: #172033;
-            --row-alt: #0f172a;
-
-            --chip-green-bg: #123226;
-            --chip-green-text: #86efac;
-
-            --tag-book-bg: #1b284f;
-            --tag-book-text: #a5b4fc;
-
-            --tag-done-bg: #123226;
-            --tag-done-text: #86efac;
-
-            --tag-progress-bg: #3a2f12;
-            --tag-progress-text: #fcd34d;
-
-            --danger-bg: #3a1d24;
-            --danger-text: #fca5a5;
-            --danger-border: #7f1d1d;
-
-            --info-bg: #10273d;
-            --info-text: #7dd3fc;
-
-            --warning-red: #f87171;
-            --req: #f87171;
-
-            --google-btn-bg: #0f172a;
-            --google-btn-border: #334155;
-
-            --role-toggle-bg: #1f2937;
-            --role-active-bg: #0f172a;
-            --role-active-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
-
-            --progress-track: #243042;
-            --progress-fill-1: #8ea2ff;
-            --progress-fill-2: #34d399;
-
-            --modal-backdrop: rgba(2, 6, 23, 0.68);
-
-            --shadow-soft: 0 12px 30px rgba(0, 0, 0, 0.35);
-            --shadow-sm: 0 3px 6px rgba(0, 0, 0, 0.3);
-            --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.52);
+            --shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.08);
         }
 
         * {
             box-sizing: border-box;
-        }
-
-        html,
-        body {
-            min-height: 100%;
         }
 
         body {
@@ -220,9 +30,8 @@
             padding: 0;
             font-family: "Pretendard", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             font-size: clamp(13px, 0.85vw + 10px, 16px);
-            background: radial-gradient(circle at top left, var(--bg-grad-1), var(--bg-grad-2) 55%);
+            background: radial-gradient(circle at top left, #eef2ff, #f9fafb 55%);
             color: var(--text-main);
-            transition: background 0.25s ease, color 0.25s ease;
         }
 
         .app-shell {
@@ -239,29 +48,11 @@
             gap: 12px;
         }
 
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .theme-toggle {
-            border: 1px solid var(--border);
-            background: var(--card-bg);
-            color: var(--text-main);
-            border-radius: 999px;
-            padding: 8px 12px;
-            font-size: clamp(11px, 0.6vw + 8px, 13px);
-            cursor: pointer;
-            box-shadow: var(--shadow-sm);
-        }
-
         .admin-btn {
             border-radius: 999px;
-            border: 1px solid var(--danger-border);
-            background: var(--danger-bg);
-            color: var(--danger-text);
+            border: 1px solid #fecaca;
+            background: #fee2e2;
+            color: #b91c1c;
             font-size: 11px;
             padding: 6px 10px;
             cursor: pointer;
@@ -293,7 +84,7 @@
             display: inline-flex;
             padding: 4px;
             border-radius: 999px;
-            background: var(--role-toggle-bg);
+            background: #e5e7eb;
             gap: 4px;
         }
 
@@ -309,10 +100,10 @@
         }
 
         .role-toggle button.active {
-            background: var(--role-active-bg);
+            background: #ffffff;
             color: var(--text-main);
             font-weight: 600;
-            box-shadow: var(--role-active-shadow);
+            box-shadow: 0 6px 16px rgba(148, 163, 184, 0.45);
         }
 
         main {
@@ -358,16 +149,15 @@
 
         .google-btn {
             border-radius: 999px;
-            border: 1px solid var(--google-btn-border);
-            background: var(--google-btn-bg);
-            color: var(--text-main);
+            border: 1px solid #d1d5db;
+            background: #ffffff;
             padding: 6px 12px;
             display: inline-flex;
             align-items: center;
             gap: 6px;
             cursor: pointer;
             font-size: clamp(11px, 0.6vw + 8px, 13px);
-            box-shadow: var(--shadow-sm);
+            box-shadow: 0 3px 6px rgba(15, 23, 42, 0.08);
         }
 
         .google-btn-icon {
@@ -417,7 +207,7 @@
         }
 
         .shelf-strip::-webkit-scrollbar-thumb {
-            background: var(--primary-soft);
+            background: #cbd5f5;
             border-radius: 999px;
         }
 
@@ -427,7 +217,7 @@
             flex: 0 0 auto;
             scroll-snap-align: start;
             border-radius: 14px;
-            background: linear-gradient(135deg, var(--tag-book-bg), var(--primary-soft));
+            background: linear-gradient(135deg, #eef2ff, #e0ecff);
             padding: 8px 10px;
             display: flex;
             flex-direction: column;
@@ -507,8 +297,8 @@
         .summary-chip {
             padding: 3px 9px;
             border-radius: 999px;
-            background: var(--chip-green-bg);
-            color: var(--chip-green-text);
+            background: #ecfdf3;
+            color: #16a34a;
             font-weight: 500;
             font-size: clamp(9px, 0.4vw + 7px, 11px);
         }
@@ -548,8 +338,8 @@
             font-size: clamp(10px, 0.5vw + 7px, 11px);
             padding: 3px 8px;
             border-radius: 999px;
-            background: var(--tag-book-bg);
-            color: var(--tag-book-text);
+            background: #eef2ff;
+            color: #4b6bfb;
             font-weight: 500;
         }
 
@@ -576,7 +366,7 @@
         }
 
         label span.req {
-            color: var(--req);
+            color: #ef4444;
             margin-left: 4px;
         }
 
@@ -589,9 +379,8 @@
             padding: 7px 9px;
             font-size: clamp(11px, 0.6vw + 8px, 13px);
             outline: none;
-            transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, color 0.15s ease;
-            background: var(--card-bg-soft);
-            color: var(--text-main);
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+            background: #f9fafb;
         }
 
         input[type="text"]:focus,
@@ -599,8 +388,8 @@
         input[type="password"]:focus,
         select:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 45%, transparent);
-            background: var(--card-bg);
+            box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.2);
+            background: #ffffff;
         }
 
         .inline {
@@ -645,9 +434,9 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--primary-2));
+            background: linear-gradient(135deg, #4b6bfb, #6366f1);
             color: #ffffff;
-            box-shadow: 0 10px 22px color-mix(in srgb, var(--primary) 55%, transparent);
+            box-shadow: 0 10px 22px rgba(79, 70, 229, 0.55);
         }
 
         .btn-primary:hover {
@@ -679,24 +468,24 @@
         }
 
         thead {
-            background: var(--thead-bg);
+            background: #f3f4ff;
         }
 
         th,
         td {
             padding: 7px 9px;
             text-align: left;
-            border-bottom: 1px solid var(--border-soft);
+            border-bottom: 1px solid #edf0f5;
         }
 
         th {
             font-weight: 600;
-            color: var(--text-sub);
+            color: #4b5563;
             font-size: clamp(10px, 0.55vw + 7px, 12px);
         }
 
         tbody tr:nth-child(even) {
-            background: var(--row-alt);
+            background: #f9fafb;
         }
 
         .tag {
@@ -709,32 +498,32 @@
         }
 
         .tag-book {
-            background: var(--tag-book-bg);
-            color: var(--tag-book-text);
+            background: #eef2ff;
+            color: #4b6bfb;
         }
 
         .tag-done {
-            background: var(--tag-done-bg);
-            color: var(--tag-done-text);
+            background: #ecfdf3;
+            color: #15803d;
         }
 
         .tag-progress {
-            background: var(--tag-progress-bg);
-            color: var(--tag-progress-text);
+            background: #fef3c7;
+            color: #b45309;
         }
 
         .progress-bar-shell {
             width: 100%;
             height: 6px;
             border-radius: 999px;
-            background: var(--progress-track);
+            background: #e5e7eb;
             overflow: hidden;
         }
 
         .progress-bar-fill {
             height: 100%;
             border-radius: 999px;
-            background: linear-gradient(90deg, var(--progress-fill-1), var(--progress-fill-2));
+            background: linear-gradient(90deg, #4b6bfb, #22c55e);
             width: 60%;
         }
 
@@ -760,15 +549,15 @@
             margin-top: 14px;
             padding: 12px 14px;
             border-radius: 14px;
-            border: 1px solid var(--border);
-            background: var(--card-bg-soft);
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
             font-size: clamp(10px, 0.5vw + 7px, 12px);
             color: var(--text-sub);
         }
 
         .privacy-title {
             font-weight: 600;
-            color: var(--text-main);
+            color: #111827;
             margin-bottom: 4px;
         }
 
@@ -784,7 +573,7 @@
         .modal-backdrop {
             position: fixed;
             inset: 0;
-            background: var(--modal-backdrop);
+            background: rgba(15, 23, 42, 0.45);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -794,16 +583,16 @@
         .modal-dialog {
             width: min(480px, 90vw);
             max-height: 90vh;
-            background: var(--card-bg);
+            background: #ffffff;
             border-radius: 16px;
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.4);
             display: flex;
             flex-direction: column;
         }
 
         .modal-header {
             padding: 10px 14px 8px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid #e5e7eb;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -817,7 +606,6 @@
         .modal-close-btn {
             border: none;
             background: transparent;
-            color: var(--text-main);
             font-size: 18px;
             cursor: pointer;
             line-height: 1;
@@ -832,7 +620,7 @@
 
         .modal-section-title {
             font-weight: 600;
-            color: var(--text-main);
+            color: #111827;
             margin: 8px 0 4px;
         }
 
@@ -853,8 +641,6 @@
             border: 1px solid var(--border);
             padding: 6px 8px;
             font-size: 12px;
-            background: var(--card-bg-soft);
-            color: var(--text-main);
         }
 
         .modal-consent-label {
@@ -866,18 +652,13 @@
 
         .modal-footer {
             padding: 8px 14px 10px;
-            border-top: 1px solid var(--border);
+            border-top: 1px solid #e5e7eb;
             display: flex;
             justify-content: flex-end;
             gap: 8px;
         }
 
         @media (max-width: 900px) {
-            .app-shell {
-                max-width: 820px;
-                padding: 0 14px;
-            }
-
             .summary-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
@@ -891,11 +672,6 @@
             header {
                 flex-direction: column;
                 align-items: flex-start;
-            }
-
-            .header-actions {
-                width: 100%;
-                justify-content: space-between;
             }
 
             .summary-grid {
@@ -914,28 +690,6 @@
                 flex: 1;
                 justify-content: center;
             }
-
-            .login-card,
-            .shelf-card,
-            .summary-card,
-            .card {
-                padding: 12px;
-            }
-
-            .theme-toggle {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-
-        @media (min-width: 1280px) {
-            .app-shell {
-                max-width: 1280px;
-            }
-
-            .content-grid {
-                grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-            }
         }
     </style>
 </head>
@@ -944,28 +698,23 @@
     <div class="app-shell">
         <header>
             <div class="brand">
-    <div>
-        <div class="brand-text-main">온책읽기 독서 대시보드</div>
-    </div>
-</div>
-
-            <div class="header-actions">
-                <button id="theme-toggle" class="theme-toggle" type="button">다크 모드</button>
-
-                <div class="role-toggle">
-                    <button id="teacher-mode-btn" class="active" type="button">교사 모드</button>
-                    <button id="student-mode-btn" type="button">학생 모드</button>
-                    <button id="admin-mode-btn" type="button" class="admin-btn">admin</button>
+                <div>
+                    <div class="brand-text-main">온책읽기 독서 기록</div>
+                    <div class="brand-text-sub">교실용 독서 관리 대시보드</div>
                 </div>
+            </div>
+
+            <div class="role-toggle">
+                <button id="teacher-mode-btn" class="active" type="button">교사 모드</button>
+                <button id="student-mode-btn" type="button">학생 모드</button>
+                <button id="admin-mode-btn" type="button" class="admin-btn">admin</button>
             </div>
         </header>
 
         <section class="login-card">
             <div>
                 <div class="login-info-title">로그인 및 개인정보 이용 안내</div>
-                <div class="login-info-desc">
-                    이 서비스는 학생의 이름(또는 번호), 반, 읽은 쪽수만 사용합니다.
-                </div>
+                <div class="login-info-desc">학생 이름, 반, 읽은 쪽수, 선택한 도서 정보만 사용합니다.</div>
                 <div style="margin-top:4px;font-size:12px;color:var(--text-sub);" id="class-info-text">
                     현재 반: (미설정)
                 </div>
@@ -1046,7 +795,7 @@
                 <article class="card admin-only">
                     <div class="card-header">
                         <div class="card-title">
-                            <span class="card-badge" style="background:var(--danger-bg);color:var(--danger-text);">ADMIN</span>
+                            <span class="card-badge" style="background:#fee2e2;color:#b91c1c;">ADMIN</span>
                             관리자 패널
                         </div>
                         <div class="card-desc">전체 반 조회 및 사용자 권한을 설정할 수 있습니다.</div>
@@ -1068,12 +817,12 @@
                         </div>
                     </div>
 
-                    <hr style="margin:14px 0;border:none;border-top:1px solid var(--border);" />
+                    <hr style="margin:14px 0;border:none;border-top:1px solid #e5e7eb;" />
 
                     <div class="card-header" style="margin-bottom:8px;">
                         <div class="card-title">
                             사용자 권한 변경
-                            <span class="card-badge" style="background:var(--tag-book-bg);color:var(--tag-book-text);">SetRole</span>
+                            <span class="card-badge" style="background:#eef2ff;color:#4b6bfb;">SetRole</span>
                         </div>
                         <div class="card-desc">student / teacher / admin 권한과 반을 설정합니다.</div>
                     </div>
@@ -1120,6 +869,24 @@
                     </div>
 
                     <div class="form-grid">
+                        <div class="form-group" style="grid-column:1 / -1;">
+                            <label>네이버 도서 검색</label>
+                            <div class="inline" style="gap:8px;">
+                                <input id="naver-book-search-input" type="text" placeholder="도서 제목으로 검색" style="flex:1;" />
+                                <button class="btn btn-primary" type="button" id="naver-book-search-btn">
+                                    <span class="dot"></span>
+                                    검색
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="grid-column:1 / -1;">
+                            <label>검색 결과 선택</label>
+                            <select id="naver-book-search-result">
+                                <option value="">검색 결과에서 도서를 선택하세요</option>
+                            </select>
+                        </div>
+
                         <div class="form-group">
                             <label>학급 / 반 <span class="req">*</span></label>
                             <input id="class-name-input" type="text" placeholder="예: 4-2" />
@@ -1156,7 +923,7 @@
                     </div>
 
                     <div class="btn-row">
-                        <button class="btn btn-ghost" type="button" id="book-delete-btn" style="color:var(--warning-red);">
+                        <button class="btn btn-ghost" type="button" id="book-delete-btn" style="color:#dc2626;">
                             선택 도서 삭제
                         </button>
                     </div>
@@ -1166,7 +933,7 @@
                     <div class="card-header">
                         <div class="card-title">
                             오늘 읽기 기록
-                            <span class="card-badge" style="background:var(--chip-green-bg);color:var(--chip-green-text);">학생용</span>
+                            <span class="card-badge" style="background:#ecfdf3;color:#16a34a;">학생용</span>
                         </div>
                         <div class="card-desc">학생이 스스로 목표를 정하고, 매 수업 후 읽은 쪽수를 입력하는 화면입니다.</div>
                     </div>
@@ -1216,7 +983,7 @@
                     <div class="card-header">
                         <div class="card-title">
                             독서 랭킹
-                            <span class="card-badge" style="background:var(--danger-bg);color:var(--danger-text);">Top 5</span>
+                            <span class="card-badge" style="background:#fee2e2;color:#b91c1c;">Top 5</span>
                         </div>
                         <div class="card-desc">누적 읽은 쪽수가 많은 순으로 학생을 보여줍니다.</div>
                     </div>
@@ -1241,7 +1008,7 @@
                 <div class="card-header">
                     <div class="card-title">
                         학생별 읽은 쪽수
-                        <span class="card-badge" style="background:var(--info-bg);color:var(--info-text);">실시간</span>
+                        <span class="card-badge" style="background:#e0f2fe;color:#0369a1;">실시간</span>
                     </div>
                     <div class="card-desc">저장된 기록을 확인하고 삭제할 수 있습니다.</div>
                 </div>
@@ -1308,8 +1075,7 @@
                     <li>교사는 언제든지 관리자에게 요청하여 데이터를 삭제할 수 있습니다.</li>
                 </ul>
 
-                <hr style="border:none;border-top:1px solid var(--border);" />
-
+                <hr />
                 <div class="modal-input-group">
                     <label>이름 또는 표시 이름</label>
                     <input type="text" id="modal-name-input" placeholder="예: 12 홍길동 / 별명" />
@@ -1350,13 +1116,9 @@
     </div>
 
     <script>
-        const STORAGE_KEY_PROFILE = "readingDashboardProfile";
-        const STORAGE_KEY_THEME = "readingDashboardTheme";
-
         const teacherModeBtn = document.getElementById("teacher-mode-btn");
         const studentModeBtn = document.getElementById("student-mode-btn");
         const adminModeBtn = document.getElementById("admin-mode-btn");
-        const themeToggleBtn = document.getElementById("theme-toggle");
 
         const loginStatusText = document.getElementById("login-status-text");
         const googleLoginUiBtn = document.getElementById("google-login-ui-btn");
@@ -1385,6 +1147,10 @@
         const bookResetBtn = document.getElementById("book-reset-btn");
         const teacherBookSelect = document.getElementById("teacher-book-select");
         const bookDeleteBtn = document.getElementById("book-delete-btn");
+
+        const naverBookSearchInput = document.getElementById("naver-book-search-input");
+        const naverBookSearchBtn = document.getElementById("naver-book-search-btn");
+        const naverBookSearchResult = document.getElementById("naver-book-search-result");
 
         const studentNameInput = document.getElementById("student-name-input");
         const studentClassInput = document.getElementById("student-class-input");
@@ -1419,41 +1185,7 @@
         const adminSetroleBtn = document.getElementById("admin-setrole-btn");
         const adminSetroleResetBtn = document.getElementById("admin-setrole-reset-btn");
 
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
-
-        function applyTheme(theme) {
-            document.documentElement.setAttribute("data-theme", theme);
-            if (themeToggleBtn) {
-                themeToggleBtn.textContent = theme === "dark" ? "라이트 모드" : "다크 모드";
-            }
-        }
-
-        function initializeTheme() {
-            const savedTheme = localStorage.getItem(STORAGE_KEY_THEME);
-            if (savedTheme === "light" || savedTheme === "dark") {
-                applyTheme(savedTheme);
-            } else {
-                applyTheme(prefersDark.matches ? "dark" : "light");
-            }
-        }
-
-        if (themeToggleBtn) {
-            themeToggleBtn.addEventListener("click", () => {
-                const currentTheme = document.documentElement.getAttribute("data-theme") || "light";
-                const nextTheme = currentTheme === "dark" ? "light" : "dark";
-                localStorage.setItem(STORAGE_KEY_THEME, nextTheme);
-                applyTheme(nextTheme);
-            });
-        }
-
-        if (prefersDark.addEventListener) {
-            prefersDark.addEventListener("change", (e) => {
-                const savedTheme = localStorage.getItem(STORAGE_KEY_THEME);
-                if (!savedTheme) {
-                    applyTheme(e.matches ? "dark" : "light");
-                }
-            });
-        }
+        const STORAGE_KEY_PROFILE = "readingDashboardProfile";
 
         function loadProfile() {
             const data = localStorage.getItem(STORAGE_KEY_PROFILE);
@@ -1527,14 +1259,12 @@
             if (mode === "teacher") {
                 teacherModeBtn.classList.add("active");
                 studentModeBtn.classList.remove("active");
-                adminModeBtn.classList.remove("active");
                 teacherOnlyEls.forEach(el => el.style.display = "block");
                 studentOnlyEls.forEach(el => el.style.display = "none");
                 loadAndRenderRecords().catch(console.error);
             } else {
                 teacherModeBtn.classList.remove("active");
                 studentModeBtn.classList.add("active");
-                adminModeBtn.classList.remove("active");
                 teacherOnlyEls.forEach(el => el.style.display = "none");
                 studentOnlyEls.forEach(el => el.style.display = "block");
             }
@@ -1622,7 +1352,6 @@
 
             teacherModeBtn.classList.remove("active");
             studentModeBtn.classList.remove("active");
-            adminModeBtn.classList.add("active");
 
             document.querySelectorAll(".teacher-only").forEach(el => el.style.display = "none");
             document.querySelectorAll(".student-only").forEach(el => el.style.display = "none");
@@ -1712,6 +1441,13 @@
             return data.id;
         }
 
+        async function searchNaverBooks(keyword) {
+            const res = await fetch(`/api/naver-book-search?query=${encodeURIComponent(keyword)}`);
+            const data = await res.json();
+            if (!data.ok) throw new Error(data.error || "네이버 도서 검색 실패");
+            return data.items || [];
+        }
+
         async function SetRole(email, secret, role, className) {
             try {
                 const res = await fetch("/admin/set-role", {
@@ -1726,7 +1462,6 @@
                 });
 
                 const data = await res.json();
-                console.log("SetRole result:", data);
 
                 if (!data.ok) {
                     alert("SetRole 실패: " + (data.error || ""));
@@ -1862,7 +1597,7 @@
                         </span>
                     </td>
                     <td>
-                        <button class="btn btn-ghost btn-delete-record" type="button" style="padding:4px 8px;font-size:11px;color:var(--warning-red);">
+                        <button class="btn btn-ghost btn-delete-record" type="button" style="padding:4px 8px;font-size:11px;color:#dc2626;">
                             삭제
                         </button>
                     </td>
@@ -1912,7 +1647,7 @@
             rankingBody.innerHTML = "";
             if (ranking.length === 0) {
                 const tr = document.createElement("tr");
-                tr.innerHTML = `<td colspan="5" style="text-align:center;color:var(--text-faint);font-size:12px;">아직 랭킹을 계산할 기록이 없습니다.</td>`;
+                tr.innerHTML = `<td colspan="5" style="text-align:center;color:#9ca3af;font-size:12px;">아직 랭킹을 계산할 기록이 없습니다.</td>`;
                 rankingBody.appendChild(tr);
             } else {
                 ranking.forEach((rec, idx) => {
@@ -1959,6 +1694,52 @@
             }
         });
 
+        naverBookSearchBtn.addEventListener("click", async () => {
+            const keyword = naverBookSearchInput.value.trim();
+
+            if (!keyword) {
+                alert("검색할 도서 제목을 입력해주세요.");
+                return;
+            }
+
+            naverBookSearchResult.innerHTML = '<option value="">검색 중...</option>';
+
+            try {
+                const items = await searchNaverBooks(keyword);
+
+                naverBookSearchResult.innerHTML = '<option value="">검색 결과에서 도서를 선택하세요</option>';
+
+                if (!items.length) {
+                    naverBookSearchResult.innerHTML = '<option value="">검색 결과가 없습니다</option>';
+                    return;
+                }
+
+                items.forEach((item) => {
+                    const title = (item.title || "").replace(/<[^>]*>/g, "");
+                    const author = item.author || "";
+                    const publisher = item.publisher || "";
+                    const image = item.image || "";
+                    const isbn = item.isbn || "";
+
+                    const option = document.createElement("option");
+                    option.value = JSON.stringify({ title, author, publisher, image, isbn });
+                    option.textContent = `${title}${author ? " / " + author : ""}${publisher ? " / " + publisher : ""}`;
+                    naverBookSearchResult.appendChild(option);
+                });
+            } catch (e) {
+                console.error(e);
+                naverBookSearchResult.innerHTML = '<option value="">검색 중 오류가 발생했습니다</option>';
+            }
+        });
+
+        naverBookSearchResult.addEventListener("change", () => {
+            if (!naverBookSearchResult.value) return;
+
+            const selected = JSON.parse(naverBookSearchResult.value);
+            bookTitleInput.value = selected.title || "";
+            bookAuthorInput.value = selected.author || "";
+        });
+
         bookAddBtn.addEventListener("click", async () => {
             try {
                 const className = classNameInput.value.trim() || getCurrentClassName();
@@ -1982,6 +1763,8 @@
                 bookTitleInput.value = "";
                 bookAuthorInput.value = "";
                 bookPagesInput.value = "";
+                naverBookSearchInput.value = "";
+                naverBookSearchResult.innerHTML = '<option value="">검색 결과에서 도서를 선택하세요</option>';
 
                 await loadAndRenderRecords(getCurrentRole() === "admin" ? adminClassSelect.value : undefined);
                 alert("도서가 추가되었습니다.");
@@ -2037,6 +1820,8 @@
             bookTitleInput.value = "";
             bookAuthorInput.value = "";
             bookPagesInput.value = "";
+            naverBookSearchInput.value = "";
+            naverBookSearchResult.innerHTML = '<option value="">검색 결과에서 도서를 선택하세요</option>';
         });
 
         recordSaveBtn.addEventListener("click", async () => {
@@ -2141,7 +1926,6 @@
         }
 
         window.onload = () => {
-            initializeTheme();
             updateLoginStatusText();
             updateAdminButton();
             initAuthAndData();
