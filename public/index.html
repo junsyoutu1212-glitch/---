@@ -668,6 +668,151 @@
             }
         }
 
+        
+
+        .naver-search-panel {
+            grid-column: 1 / -1;
+            border: 1px solid #dbe4ff;
+            background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+            border-radius: 14px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .naver-search-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .naver-search-row input {
+            flex: 1 1 260px;
+        }
+
+        .naver-result-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 10px;
+            margin-top: 2px;
+        }
+
+        .naver-result-card {
+            border: 1px solid #dbe4ff;
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            box-shadow: 0 8px 18px rgba(79, 70, 229, 0.08);
+        }
+
+        .naver-result-cover {
+            width: 56px;
+            height: 80px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #eef2ff;
+            flex: 0 0 auto;
+            border: 1px solid #e5e7eb;
+        }
+
+        .naver-result-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .naver-result-body {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+        }
+
+        .naver-result-title {
+            font-size: clamp(11px, 0.65vw + 8px, 13px);
+            font-weight: 700;
+            line-height: 1.35;
+            color: #111827;
+            word-break: keep-all;
+        }
+
+        .naver-result-meta {
+            font-size: clamp(10px, 0.5vw + 7px, 12px);
+            color: var(--text-sub);
+            line-height: 1.35;
+        }
+
+        .naver-result-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 2px;
+        }
+
+        .naver-result-empty {
+            font-size: clamp(10px, 0.5vw + 7px, 12px);
+            color: var(--text-sub);
+            padding: 10px 2px 2px;
+        }
+
+        .book-preview {
+            grid-column: 1 / -1;
+            display: none;
+            border-radius: 14px;
+            border: 1px dashed #c7d2fe;
+            background: #f8faff;
+            padding: 12px;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .book-preview.show {
+            display: flex;
+        }
+
+        .book-preview-cover {
+            width: 72px;
+            height: 104px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #eef2ff;
+            border: 1px solid #dbe4ff;
+            flex: 0 0 auto;
+        }
+
+        .book-preview-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .book-preview-text {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .book-preview-title {
+            font-size: clamp(12px, 0.8vw + 9px, 15px);
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .book-preview-meta {
+            font-size: clamp(10px, 0.5vw + 7px, 12px);
+            color: var(--text-sub);
+            line-height: 1.35;
+        }
+
+
         @media (max-width: 640px) {
             header {
                 flex-direction: column;
@@ -699,10 +844,10 @@
         <header>
             <div class="brand">
                 <div>
-                    <div class="brand-text-main">온책읽기 독서 기록</div>
+                    <div class="brand-text-main">온책읽기 독서 대시보드</div>
+                    <div class="brand-text-sub">학급 한 권 읽기 · 쪽수 기반 독서 기록</div>
                 </div>
             </div>
-
             <div class="role-toggle">
                 <button id="teacher-mode-btn" class="active" type="button">교사 모드</button>
                 <button id="student-mode-btn" type="button">학생 모드</button>
@@ -713,7 +858,9 @@
         <section class="login-card">
             <div>
                 <div class="login-info-title">로그인 및 개인정보 이용 안내</div>
-                <div class="login-info-desc">학생 이름, 반, 읽은 쪽수, 선택한 도서 정보만 사용합니다.</div>
+                <div class="login-info-desc">
+                    이 서비스는 학생의 이름(또는 번호), 반, 읽은 쪽수만 사용합니다.
+                </div>
                 <div style="margin-top:4px;font-size:12px;color:var(--text-sub);" id="class-info-text">
                     현재 반: (미설정)
                 </div>
@@ -868,25 +1015,6 @@
                     </div>
 
                     <div class="form-grid">
-                        <div class="form-group" style="grid-column:1 / -1;">
-                            <label>네이버 도서 검색</label>
-                            <div class="inline" style="gap:8px;">
-                                <input id="naver-book-search-input" type="text" placeholder="도서 제목으로 검색"
-                                    style="flex:1;" />
-                                <button class="btn btn-primary" type="button" id="naver-book-search-btn">
-                                    <span class="dot"></span>
-                                    검색
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="form-group" style="grid-column:1 / -1;">
-                            <label>검색 결과 선택</label>
-                            <select id="naver-book-search-result">
-                                <option value="">검색 결과에서 도서를 선택하세요</option>
-                            </select>
-                        </div>
-
                         <div class="form-group">
                             <label>학급 / 반 <span class="req">*</span></label>
                             <input id="class-name-input" type="text" placeholder="예: 4-2" />
@@ -964,8 +1092,7 @@
                         <div class="form-group">
                             <label>나의 목표 쪽수</label>
                             <div class="inline">
-                                <input id="target-pages-input" type="number" min="0" placeholder="예: 150"
-                                    style="flex:1;" />
+                                <input id="target-pages-input" type="number" min="0" placeholder="예: 150" style="flex:1;" />
                                 <span>전체 중 내가 정한 목표</span>
                             </div>
                         </div>
@@ -1037,6 +1164,16 @@
                     <span>교사/관리자 계정만 수정·삭제할 수 있습니다.</span>
                 </div>
             </section>
+
+            <section class="privacy-card">
+                <div class="privacy-title">개인정보 처리방침 (요약)</div>
+                <ul class="privacy-list">
+                    <li>이 페이지는 학생의 이름(또는 번호), 반, 읽은 쪽수, 선택한 도서 정보를 사용합니다.</li>
+                    <li>입력된 정보는 데이터베이스 서버에 저장됩니다.</li>
+                    <li>수집 정보는 학급 단위 독서 통계 및 수업 피드백 제공 목적에 한해 사용됩니다.</li>
+                    <li>개별 학생의 개인정보를 광고·마케팅·외부 통계 서비스에 제공하지 않습니다.</li>
+                </ul>
+            </section>
         </main>
     </div>
 
@@ -1062,7 +1199,7 @@
                 <p class="modal-section-title">3. 개인정보 보관 및 처리 방침</p>
                 <ul>
                     <li>입력된 정보는 브라우저 및 데이터베이스 서버 내에서만 사용됩니다.</li>
-                    <li>구글 로그인 연동 시, 구글 계정 정보는 식별 용도로만 사용합니다.</li>
+                    <li>구글 로그인 연동 시, 구글 계정 정보는 학급 출석/식별 용도로만 사용합니다.</li>
                     <li>수집된 정보를 광고·마케팅·외부 통계 서비스에 제공하지 않습니다.</li>
                 </ul>
 
@@ -1077,6 +1214,7 @@
                 </ul>
 
                 <hr />
+
                 <div class="modal-input-group">
                     <label>이름 또는 표시 이름</label>
                     <input type="text" id="modal-name-input" placeholder="예: 12 홍길동 / 별명" />
@@ -1148,10 +1286,6 @@
         const bookResetBtn = document.getElementById("book-reset-btn");
         const teacherBookSelect = document.getElementById("teacher-book-select");
         const bookDeleteBtn = document.getElementById("book-delete-btn");
-
-        const naverBookSearchInput = document.getElementById("naver-book-search-input");
-        const naverBookSearchBtn = document.getElementById("naver-book-search-btn");
-        const naverBookSearchResult = document.getElementById("naver-book-search-result");
 
         const studentNameInput = document.getElementById("student-name-input");
         const studentClassInput = document.getElementById("student-class-input");
@@ -1442,13 +1576,6 @@
             return data.id;
         }
 
-        async function searchNaverBooks(keyword) {
-            const res = await fetch(`/api/naver-book-search?query=${encodeURIComponent(keyword)}`);
-            const data = await res.json();
-            if (!data.ok) throw new Error(data.error || "네이버 도서 검색 실패");
-            return data.items || [];
-        }
-
         async function SetRole(email, secret, role, className) {
             try {
                 const res = await fetch("/admin/set-role", {
@@ -1463,6 +1590,7 @@
                 });
 
                 const data = await res.json();
+                console.log("SetRole result:", data);
 
                 if (!data.ok) {
                     alert("SetRole 실패: " + (data.error || ""));
@@ -1571,8 +1699,8 @@
                 const progress = totalPagesBook ? Math.min(100, Math.round((Number(rec.total_pages) / totalPagesBook) * 100)) : 0;
                 const status =
                     progress >= 100 ? "완독" :
-                        progress >= 80 ? "거의 완독" :
-                            "읽는 중";
+                    progress >= 80 ? "거의 완독" :
+                    "읽는 중";
 
                 totalToday += Number(rec.today_pages || 0);
                 studentSet.add(rec.student_name + "|" + rec.class_name);
@@ -1695,52 +1823,6 @@
             }
         });
 
-        naverBookSearchBtn.addEventListener("click", async () => {
-            const keyword = naverBookSearchInput.value.trim();
-
-            if (!keyword) {
-                alert("검색할 도서 제목을 입력해주세요.");
-                return;
-            }
-
-            naverBookSearchResult.innerHTML = '<option value="">검색 중...</option>';
-
-            try {
-                const items = await searchNaverBooks(keyword);
-
-                naverBookSearchResult.innerHTML = '<option value="">검색 결과에서 도서를 선택하세요</option>';
-
-                if (!items.length) {
-                    naverBookSearchResult.innerHTML = '<option value="">검색 결과가 없습니다</option>';
-                    return;
-                }
-
-                items.forEach((item) => {
-                    const title = (item.title || "").replace(/<[^>]*>/g, "");
-                    const author = item.author || "";
-                    const publisher = item.publisher || "";
-                    const image = item.image || "";
-                    const isbn = item.isbn || "";
-
-                    const option = document.createElement("option");
-                    option.value = JSON.stringify({ title, author, publisher, image, isbn });
-                    option.textContent = `${title}${author ? " / " + author : ""}${publisher ? " / " + publisher : ""}`;
-                    naverBookSearchResult.appendChild(option);
-                });
-            } catch (e) {
-                console.error(e);
-                naverBookSearchResult.innerHTML = '<option value="">검색 중 오류가 발생했습니다</option>';
-            }
-        });
-
-        naverBookSearchResult.addEventListener("change", () => {
-            if (!naverBookSearchResult.value) return;
-
-            const selected = JSON.parse(naverBookSearchResult.value);
-            bookTitleInput.value = selected.title || "";
-            bookAuthorInput.value = selected.author || "";
-        });
-
         bookAddBtn.addEventListener("click", async () => {
             try {
                 const className = classNameInput.value.trim() || getCurrentClassName();
@@ -1764,8 +1846,6 @@
                 bookTitleInput.value = "";
                 bookAuthorInput.value = "";
                 bookPagesInput.value = "";
-                naverBookSearchInput.value = "";
-                naverBookSearchResult.innerHTML = '<option value="">검색 결과에서 도서를 선택하세요</option>';
 
                 await loadAndRenderRecords(getCurrentRole() === "admin" ? adminClassSelect.value : undefined);
                 alert("도서가 추가되었습니다.");
@@ -1821,8 +1901,6 @@
             bookTitleInput.value = "";
             bookAuthorInput.value = "";
             bookPagesInput.value = "";
-            naverBookSearchInput.value = "";
-            naverBookSearchResult.innerHTML = '<option value="">검색 결과에서 도서를 선택하세요</option>';
         });
 
         recordSaveBtn.addEventListener("click", async () => {
@@ -1929,6 +2007,7 @@
         window.onload = () => {
             updateLoginStatusText();
             updateAdminButton();
+            updateSelectedBookPreview(null);
             initAuthAndData();
         };
     </script>
