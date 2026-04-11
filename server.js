@@ -187,6 +187,15 @@ app.post("/teacher/set-class", requireRole(["teacher", "admin"]), async (req, re
 });
 
 // ===== 네이버 도서 검색 API 프록시 =====
+const NAVER_CLIENT_ID = process.env.NAVER_CLIENT_ID;
+const NAVER_CLIENT_SECRET = process.env.NAVER_CLIENT_SECRET;
+
+// Node 18 미만이면 node-fetch 필요 (npm i node-fetch@2)
+let fetchFn = global.fetch;
+if (!fetchFn) {
+  fetchFn = require("node-fetch"); // Node 18 이상이면 이 줄 없어도 됨
+}
+
 app.get("/api/naver-book-search", async (req, res) => {
   const query = (req.query.query || "").toString().trim();
 
@@ -194,41 +203,56 @@ app.get("/api/naver-book-search", async (req, res) => {
     return res.status(400).json({ ok: false, error: "query 파라미터가 필요합니다." });
   }
 
-  const NAVER_CLIENT_ID = process.env.NAVER_CLIENT_ID;
-  const NAVER_CLIENT_SECRET = process.env.NAVER_CLIENT_SECRET;
-
   if (!NAVER_CLIENT_ID || !NAVER_CLIENT_SECRET) {
-    return res.status(500).json({ ok: false, error: "네이버 API 키 미설정" });
+    console.error("NAVER_CLIENT_ID or NAVER_CLIENT_SECRET missing");
+    return res.status(500).json({
+      ok: false,
+      error: "NAVER_CLIENT_ID 또는 NAVER_CLIENT_SECRET 이 설정되지 않았습니다."
+    });
   }
 
   const url =
     "https://openapi.naver.com/v1/search/book.json" +
-    `?query=${encodeURIComponent(query)}` +
-    "&display=10&start=1";
+    `?query=${encodeURIComponent(query)}&display=10&start=1`;
 
   try {
-    const resp = await fetch(url, {
+    const resp = await fetchFn(url, {
       headers: {
         "X-Naver-Client-Id": NAVER_CLIENT_ID,
         "X-Naver-Client-Secret": NAVER_CLIENT_SECRET
       }
     });
 
-    const data = await resp.json();
+    const text = await resp.text();
+    console.log("Naver status =", resp.status);
+    console.log("Naver raw response =", text);
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { raw: text };
+    }
 
     if (!resp.ok) {
-      console.error("Naver API error:", data);
-      return res.status(500).json({
+      return res.status(resp.status).json({
         ok: false,
         error: "네이버 API 오류",
         detail: data
       });
     }
 
-    res.json({ ok: true, items: data.items || [] });
+    return res.json({
+      ok: true,
+      items: data.items || []
+    });
   } catch (e) {
     console.error("Naver API 호출 실패:", e);
-    res.status(500).json({ ok: false, error: "서버에서 네이버 API 호출 실패" });
+    return res.status(500).json({
+      ok: false,
+      error: "서버에서 네이버 API 호출 실패",
+      detail: String(e.message || e)
+    });
   }
 });
 
