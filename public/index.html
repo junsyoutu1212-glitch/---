@@ -700,7 +700,6 @@
             <div class="brand">
                 <div>
                     <div class="brand-text-main">온책읽기 독서 기록</div>
-                    <div class="brand-text-sub">교실용 독서 관리 대시보드</div>
                 </div>
             </div>
 
@@ -872,7 +871,8 @@
                         <div class="form-group" style="grid-column:1 / -1;">
                             <label>네이버 도서 검색</label>
                             <div class="inline" style="gap:8px;">
-                                <input id="naver-book-search-input" type="text" placeholder="도서 제목으로 검색" style="flex:1;" />
+                                <input id="naver-book-search-input" type="text" placeholder="도서 제목으로 검색"
+                                    style="flex:1;" />
                                 <button class="btn btn-primary" type="button" id="naver-book-search-btn">
                                     <span class="dot"></span>
                                     검색
@@ -964,7 +964,8 @@
                         <div class="form-group">
                             <label>나의 목표 쪽수</label>
                             <div class="inline">
-                                <input id="target-pages-input" type="number" min="0" placeholder="예: 150" style="flex:1;" />
+                                <input id="target-pages-input" type="number" min="0" placeholder="예: 150"
+                                    style="flex:1;" />
                                 <span>전체 중 내가 정한 목표</span>
                             </div>
                         </div>
@@ -1570,8 +1571,8 @@
                 const progress = totalPagesBook ? Math.min(100, Math.round((Number(rec.total_pages) / totalPagesBook) * 100)) : 0;
                 const status =
                     progress >= 100 ? "완독" :
-                    progress >= 80 ? "거의 완독" :
-                    "읽는 중";
+                        progress >= 80 ? "거의 완독" :
+                            "읽는 중";
 
                 totalToday += Number(rec.today_pages || 0);
                 studentSet.add(rec.student_name + "|" + rec.class_name);
